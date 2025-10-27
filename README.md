@@ -10,11 +10,22 @@ This is a Next.js application that demonstrates how to use the `x402-next` middl
 
 ## Setup
 
-1. Copy `.env-local` to `.env` and add your Ethereum address to receive payments:
+1. Copy `.env-local` to `.env` and configure your environment:
 
 ```bash
 cp .env-local .env
 ```
+
+Required environment variables:
+- `RESOURCE_WALLET_ADDRESS`: Your Ethereum address to receive payments
+- `NETWORK`: The network to use (see supported networks below)
+- `NEXT_PUBLIC_FACILITATOR_URL`: Facilitator service URL (default: https://x402.org/facilitator)
+
+Optional - Custom EIP3009 Payment Token:
+- `PAYMENT_TOKEN_ADDRESS`: Custom token contract address
+- `PAYMENT_TOKEN_NAME`: Token name from EIP-712 (call `name()` on contract)
+- `PAYMENT_TOKEN_VERSION`: Token version from EIP-712 (call `version()` on contract)
+- `PAYMENT_TOKEN_DECIMALS`: Token decimals (e.g., 6 for USDC, 18 for most ERC20)
 
 2. Install dependencies:
 ```bash
@@ -25,6 +36,17 @@ npm install
 ```bash
 npm run dev
 ```
+
+## Supported Networks
+
+The x402-next middleware supports the following networks:
+- **Base**: `base`, `base-sepolia`
+- **Avalanche**: `avalanche`, `avalanche-fuji`
+- **Polygon**: `polygon`, `polygon-amoy`
+- **Other EVM**: `iotex`, `sei`, `sei-testnet`, `peaq`
+- **Solana**: `solana`, `solana-devnet`
+
+**Note**: BSC (Binance Smart Chain) is not currently supported in v0.7.0.
 
 ## Example Routes
 
