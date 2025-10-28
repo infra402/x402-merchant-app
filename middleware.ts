@@ -44,8 +44,13 @@ const getPaymentPrice = () => {
 
   // Use custom token if fully configured
   if (customTokenAddress && customTokenName && customTokenVersion && customTokenDecimals) {
+    // Calculate amount: 0.01 tokens = 0.01 * 10^decimals
+    // For 18 decimals: 0.01 * 10^18 = 10000000000000000
+    // For 6 decimals: 0.01 * 10^6 = 10000
+    const amount = (0.01 * Math.pow(10, customTokenDecimals)).toString();
+
     return {
-      amount: "10000", // 0.01 with 6 decimals (adjust based on your token decimals)
+      amount,
       asset: {
         address: customTokenAddress,
         decimals: customTokenDecimals,
