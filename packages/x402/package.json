@@ -63,7 +63,7 @@
     "./client": "./src/client/index.ts",
     "./verify": "./src/verify/index.ts",
     "./facilitator": "./src/facilitator/index.ts",
-    "./paywall": "./src/paywall/index.tsx",
+    "./paywall": "./src/paywall/index.ts",
     "./types": "./src/types/index.ts"
   }
 }
