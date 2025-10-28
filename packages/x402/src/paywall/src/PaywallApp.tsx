@@ -36,7 +36,7 @@ export function PaywallApp() {
   const [isCorrectChain, setIsCorrectChain] = useState<boolean | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [formattedUsdcBalance, setFormattedUsdcBalance] = useState<string>("");
-  const [hideBalance, setHideBalance] = useState(true);
+  const [hideBalance, setHideBalance] = useState(false);
 
   const x402 = window.x402;
   const amount = x402.amount || 0;
@@ -175,11 +175,11 @@ export function PaywallApp() {
     setIsPaying(true);
 
     try {
-      setStatus("Checking USDC balance...");
+      setStatus(`Checking ${tokenName} balance...`);
       const balance = await getUSDCBalance(publicClient, address);
 
       if (balance === 0n) {
-        throw new Error(`Insufficient balance. Make sure you have USDC on ${chainName}`);
+        throw new Error(`Insufficient balance. Make sure you have ${tokenName} on ${networkDisplayName}`);
       }
 
       setStatus("Creating payment signature...");
