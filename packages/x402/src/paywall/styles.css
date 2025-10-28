@@ -237,5 +237,19 @@ body {
 /* OnchainKit wallet component overrides */
 .ock-text-foreground,
 .ock-text-foreground-muted {
-  color: var(--text-color) !important;
+  color: #0B0B10 !important;
+}
+
+/* Wallet area - light background for icon visibility */
+.ock-bg-default,
+.ock-bg-default-hover,
+.ock-bg-secondary {
+  background-color: #E8ECF1 !important;
+}
+
+/* Wallet dropdown */
+[data-testid="ockWalletDropdown"],
+[data-testid="ockWalletDropdownDisconnect"] {
+  background-color: #E8ECF1 !important;
+  color: #0B0B10 !important;
 }

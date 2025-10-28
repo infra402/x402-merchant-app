@@ -320,11 +320,11 @@ export function PaywallApp() {
           </div>
         ) : (
           <>
-            <p>
+            <p style={{ color: '#E8ECF1' }}>
               {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
               content, please pay ${amount} {networkDisplayName} {tokenName}.
             </p>
-            <p className="token-info">
+            <p className="token-info" style={{ color: '#9AA4B2' }}>
               <span className="text-sm opacity-70">Token: {tokenAddress}</span>
             </p>
             {testnet && (
