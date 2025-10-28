@@ -38,6 +38,7 @@ export function PaywallApp() {
   const [isPaying, setIsPaying] = useState(false);
   const [formattedUsdcBalance, setFormattedUsdcBalance] = useState<string>("");
   const [hideBalance, setHideBalance] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const x402 = window.x402;
   const amount = x402.amount || 0;
@@ -184,14 +185,8 @@ export function PaywallApp() {
   }, [sessionToken]);
 
   const handleSuccessfulResponse = useCallback(async (response: Response) => {
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("text/html")) {
-      document.documentElement.innerHTML = await response.text();
-    } else {
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.location.href = url;
-    }
+    setPaymentSuccess(true);
+    setStatus("Payment successful! Access granted.");
   }, []);
 
   const handleSwitchChain = useCallback(async () => {
@@ -317,32 +312,46 @@ export function PaywallApp() {
   return (
     <div className="container gap-8">
       <div className="header">
-        <h1 className="title">Payment Required</h1>
-        <p>
-          {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
-          content, please pay ${amount} {networkDisplayName} {tokenName}.
-        </p>
-        {testnet && (
-          <p className="instructions">
-            Need {networkDisplayName} {tokenName}?{" "}
-            <a href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer">
-              Get some <u>here</u>.
-            </a>
-          </p>
+        <h1 className="title">{paymentSuccess ? "Payment Successful" : "Payment Required"}</h1>
+        {paymentSuccess ? (
+          <div className="success-message">
+            <p className="text-green-600 font-semibold">✓ Payment confirmed!</p>
+            <p>Your payment has been processed successfully. You now have access to the protected content.</p>
+          </div>
+        ) : (
+          <>
+            <p>
+              {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
+              content, please pay ${amount} {networkDisplayName} {tokenName}.
+            </p>
+            <p className="token-info">
+              <span className="text-sm opacity-70">Token: {tokenAddress}</span>
+            </p>
+            {testnet && (
+              <p className="instructions">
+                Need {networkDisplayName} {tokenName}?{" "}
+                <a href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer">
+                  Get some <u>here</u>.
+                </a>
+              </p>
+            )}
+          </>
         )}
       </div>
 
       <div className="content w-full">
-        <Wallet className="w-full">
-          <ConnectWallet className="w-full py-3" disconnectedLabel="Connect wallet">
-            <Avatar className="h-5 w-5 opacity-80" />
-            <Name className="opacity-80 text-sm" />
-          </ConnectWallet>
-          <WalletDropdown>
-            <WalletDropdownDisconnect className="opacity-80" />
-          </WalletDropdown>
-        </Wallet>
-        {isConnected && (
+        {!paymentSuccess && (
+          <>
+            <Wallet className="w-full">
+              <ConnectWallet className="w-full py-3" disconnectedLabel="Connect wallet">
+                <Avatar className="h-5 w-5 opacity-80" />
+                <Name className="opacity-80 text-sm" />
+              </ConnectWallet>
+              <WalletDropdown>
+                <WalletDropdownDisconnect className="opacity-80" />
+              </WalletDropdown>
+            </Wallet>
+            {isConnected && (
           <div id="payment-section">
             <div className="payment-details">
               <div className="payment-row">
@@ -395,6 +404,8 @@ export function PaywallApp() {
               </button>
             )}
           </div>
+        )}
+          </>
         )}
         {status && <div className="status">{status}</div>}
       </div>
