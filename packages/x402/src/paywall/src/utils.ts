@@ -43,7 +43,13 @@ export function ensureValidAmount(paymentRequirements: PaymentRequirements): Pay
 
   if (window.x402?.amount) {
     try {
-      const amountInBaseUnits = Math.round(window.x402.amount * 1_000_000);
+      // Get decimals from payment requirements extra field, default to 6 (USDC)
+      const decimals = (updatedRequirements.extra as { decimals?: number })?.decimals || 6;
+      // Use BigInt to avoid precision loss with large decimal values (e.g., 18 decimals)
+      const amountInBaseUnits = (
+        BigInt(Math.round(window.x402.amount * 100)) *
+        BigInt(10) ** BigInt(decimals)
+      ) / BigInt(100);
       updatedRequirements.maxAmountRequired = amountInBaseUnits.toString();
     } catch (error) {
       console.error("Failed to parse amount:", error);

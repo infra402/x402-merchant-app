@@ -160,7 +160,10 @@ export function paymentMiddleware(
           },
           output: outputSchema,
         },
-        extra: (asset as ERC20TokenAmount["asset"]).eip712,
+        extra: {
+          ...(asset as ERC20TokenAmount["asset"]).eip712,
+          decimals: asset.decimals,
+        },
       });
     }
     // svm networks
