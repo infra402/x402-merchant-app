@@ -8,7 +8,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-4 py-20 lg:py-28">
           <div className="flex flex-col items-center">
-            <Logo className="w-32 h-32 mb-8" />
+            <Logo className="w-32 mb-8" />
             <p className="text-4xl font-semibold text-gray-700 mb-8 font-mono text-center">
               x402 merchant app demo
             </p>
