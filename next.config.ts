@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Transpile local packages directly - no pre-building needed!
+  transpilePackages: ['x402', 'x402-next'],
+
   env: {
     RESOURCE_WALLET_ADDRESS: process.env.RESOURCE_WALLET_ADDRESS,
     NEXT_PUBLIC_FACILITATOR_URL: process.env.NEXT_PUBLIC_FACILITATOR_URL,
