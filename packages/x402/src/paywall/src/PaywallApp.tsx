@@ -46,6 +46,46 @@ export function PaywallApp() {
   const network = testnet ? "base-sepolia" : "base";
   const showOnramp = Boolean(!testnet && isConnected && x402.sessionTokenEndpoint);
 
+  // Get network and token information from payment requirements
+  const paymentRequirements = x402
+    ? selectPaymentRequirements([x402.paymentRequirements].flat(), network, "exact")
+    : null;
+
+  // Helper function to get human-readable network name
+  const getNetworkDisplayName = (networkId: string): string => {
+    const networkNames: Record<string, string> = {
+      "base-sepolia": "Base Sepolia",
+      "base": "Base",
+      "bsc-testnet": "BSC Testnet",
+      "bsc": "BSC",
+      "avalanche-fuji": "Avalanche Fuji",
+      "avalanche": "Avalanche",
+      "iotex": "IoTeX",
+      "solana-devnet": "Solana Devnet",
+      "solana": "Solana",
+      "sei": "Sei",
+      "sei-testnet": "Sei Testnet",
+      "polygon": "Polygon",
+      "polygon-amoy": "Polygon Amoy",
+      "peaq": "Peaq",
+    };
+    return networkNames[networkId] || networkId;
+  };
+
+  // Get token name from payment requirements
+  const getTokenName = (): string => {
+    // Check if extra field has EIP712 metadata with token name
+    const extra = paymentRequirements?.extra;
+    if (extra && typeof extra === "object" && "name" in extra) {
+      return (extra as { name?: string }).name || "USDC";
+    }
+
+    return "USDC";
+  };
+
+  const networkDisplayName = paymentRequirements ? getNetworkDisplayName(paymentRequirements.network) : chainName;
+  const tokenName = getTokenName();
+
   useEffect(() => {
     if (address) {
       handleSwitchChain();
@@ -57,10 +97,6 @@ export function PaywallApp() {
     chain: paymentChain,
     transport: http(),
   }).extend(publicActions);
-
-  const paymentRequirements = x402
-    ? selectPaymentRequirements([x402.paymentRequirements].flat(), network, "exact")
-    : null;
 
   useEffect(() => {
     if (isConnected && paymentChain.id === connectedChainId) {
@@ -221,11 +257,11 @@ export function PaywallApp() {
         <h1 className="title">Payment Required</h1>
         <p>
           {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
-          content, please pay ${amount} {chainName} USDC.
+          content, please pay ${amount} {networkDisplayName} {tokenName}.
         </p>
         {testnet && (
           <p className="instructions">
-            Need Base Sepolia USDC?{" "}
+            Need {networkDisplayName} {tokenName}?{" "}
             <a href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer">
               Get some <u>here</u>.
             </a>
@@ -257,18 +293,18 @@ export function PaywallApp() {
                 <span className="payment-value">
                   <button className="balance-button" onClick={() => setHideBalance(prev => !prev)}>
                     {formattedUsdcBalance && !hideBalance
-                      ? `$${formattedUsdcBalance} USDC`
-                      : "••••• USDC"}
+                      ? `$${formattedUsdcBalance} ${tokenName}`
+                      : `••••• ${tokenName}`}
                   </button>
                 </span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Amount:</span>
-                <span className="payment-value">${amount} USDC</span>
+                <span className="payment-value">${amount} {tokenName}</span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Network:</span>
-                <span className="payment-value">{chainName}</span>
+                <span className="payment-value">{networkDisplayName}</span>
               </div>
             </div>
 
