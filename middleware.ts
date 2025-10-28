@@ -47,7 +47,8 @@ const getPaymentPrice = () => {
     // Calculate amount: 0.01 tokens = 0.01 * 10^decimals
     // For 18 decimals: 0.01 * 10^18 = 10000000000000000
     // For 6 decimals: 0.01 * 10^6 = 10000
-    const amount = (0.01 * Math.pow(10, customTokenDecimals)).toString();
+    // Use BigInt to avoid JavaScript precision loss with large numbers
+    const amount = ((BigInt(1) * BigInt(10) ** BigInt(customTokenDecimals)) / BigInt(100)).toString();
 
     return {
       amount,
