@@ -1,4 +1,4 @@
-# x402-next Example App
+# x402-merchant-app
 
 This is a Next.js application that demonstrates how to use the `x402-next` middleware to implement paywall functionality in your Next.js routes.
 
@@ -39,14 +39,37 @@ npm run dev
 
 ## Supported Networks
 
-The x402-next middleware supports the following networks:
+### Natively Supported Networks
+
+The x402-next middleware natively supports the following networks:
 - **Base**: `base`, `base-sepolia`
 - **Avalanche**: `avalanche`, `avalanche-fuji`
 - **Polygon**: `polygon`, `polygon-amoy`
 - **Other EVM**: `iotex`, `sei`, `sei-testnet`, `peaq`
 - **Solana**: `solana`, `solana-devnet`
 
-**Note**: BSC (Binance Smart Chain) is not currently supported in v0.7.0.
+### Custom Network Support
+
+This application automatically supports **any additional network** when used with a custom facilitator. The middleware detects if a network is not natively supported and enables custom facilitator mode.
+
+**Requirements for custom networks (all required):**
+1. Set `NEXT_PUBLIC_FACILITATOR_URL` to your custom facilitator endpoint
+2. Set `NETWORK` to your custom network name (e.g., `bsc-testnet`)
+3. Configure **ALL 4** custom EIP3009 payment token variables:
+   - `PAYMENT_TOKEN_ADDRESS` - Contract address of your EIP3009 token
+   - `PAYMENT_TOKEN_NAME` - Token name from `name()` method
+   - `PAYMENT_TOKEN_VERSION` - Token version from `version()` method
+   - `PAYMENT_TOKEN_DECIMALS` - Token decimals (e.g., 18)
+
+**Important**: Custom networks **require** a custom token. The middleware cannot use default USDC on unsupported networks and will throw an error if token configuration is incomplete.
+
+**Examples of custom networks:**
+- BSC Testnet: `NETWORK=bsc-testnet`
+- Arbitrum: `NETWORK=arbitrum`
+- Optimism: `NETWORK=optimism`
+- Any EVM-compatible chain supported by your facilitator
+
+**Note**: Custom networks bypass x402's built-in wallet integration and rely entirely on your facilitator for payment verification and settlement.
 
 ## Example Routes
 
