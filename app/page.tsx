@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import WordmarkCondensed from './assets/x402_wordmark_light.svg';
+import Logo from './assets/infra402.svg';
 
 export default function Home() {
   return (
@@ -8,11 +8,11 @@ export default function Home() {
         {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-4 py-20 lg:py-28">
           <div className="text-center">
-            <div className="w-64 mb-6 mx-auto">
-              <WordmarkCondensed className="mx-auto" />
+            <div className="w-48 mb-8 mx-auto">
+              <Logo className="mx-auto" />
             </div>
-            <p className="text-xl text-gray-600 mb-8 font-mono">
-              Fullstack demo powered by Next.js
+            <p className="text-3xl text-gray-600 mb-8 font-mono">
+              x402 merchant app demo
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
@@ -26,23 +26,23 @@ export default function Home() {
         </section>
       </div>
       <footer className="py-8 text-center text-sm text-gray-500">
-        By using this site, you agree to be bound by the{' '}
+        Powered by {' '}
         <a
-          href="https://www.coinbase.com/legal/developer-platform/terms-of-service"
+          href="https://infra402.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500"
         >
-          CDP Terms of Service
+          Infra402
         </a>{' '}
-        and{' '}
+        and settled on {' '}
         <a
-          href="https://www.coinbase.com/legal/privacy"
+          href="https://facilitator.infra402.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500"
         >
-          Global Privacy Policy
+          Infra402 Multi-chain Facilitator
         </a>
         .
       </footer>
