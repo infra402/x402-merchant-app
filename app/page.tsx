@@ -3,19 +3,20 @@ import Logo from './assets/infra402.svg';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-900 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0B0B10', color: '#E8ECF1' }}>
       <div className="flex-grow">
         {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-4 py-20 lg:py-28">
           <div className="flex flex-col items-center">
             <Logo className="w-64 mx-auto mb-8" />
-            <p className="text-4xl font-semibold text-gray-700 mb-8 font-mono text-center">
+            <p className="text-4xl font-semibold mb-8 text-center" style={{ fontFamily: 'Geist Mono, monospace', color: '#E8ECF1' }}>
               x402 merchant app demo
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 href="/protected"
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-mono transition-colors text-white"
+                className="px-6 py-3 rounded-lg transition-colors"
+                style={{ backgroundColor: '#F4C84A', color: '#0B0B10', fontFamily: 'Geist Mono, monospace' }}
               >
                 Try an x402 payment
               </Link>
@@ -23,13 +24,13 @@ export default function Home() {
           </div>
         </section>
       </div>
-      <footer className="py-8 text-center text-sm text-gray-500">
+      <footer className="py-8 text-center text-sm" style={{ color: '#9AA4B2', fontFamily: 'Geist Sans, sans-serif' }}>
         Powered by {' '}
         <a
           href="https://infra402.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500"
+          style={{ color: '#2DD4FF' }}
         >
           Infra402
         </a>{' '}
@@ -38,7 +39,7 @@ export default function Home() {
           href="https://facilitator.infra402.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500"
+          style={{ color: '#2DD4FF' }}
         >
           Infra402 Multi-chain Facilitator
         </a>
