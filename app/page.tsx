@@ -30,7 +30,8 @@ export default function Home() {
           href="https://infra402.com"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: '#2DD4FF' }}
+          className="hover:underline"
+          style={{ color: '#F4C84A' }}
         >
           Infra402
         </a>{' '}
@@ -39,7 +40,8 @@ export default function Home() {
           href="https://facilitator.infra402.com"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: '#2DD4FF' }}
+          className="hover:underline"
+          style={{ color: '#F4C84A' }}
         >
           Infra402 Multi-chain Facilitator
         </a>

@@ -203,6 +203,7 @@ body {
 
 .payment-value {
   font-weight: 500;
+  color: var(--text-color);
 }
 
 .hidden {
@@ -230,4 +231,11 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  color: var(--text-color);
+}
+
+/* OnchainKit wallet component overrides */
+.ock-text-foreground,
+.ock-text-foreground-muted {
+  color: var(--text-color) !important;
 }
