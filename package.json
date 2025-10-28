@@ -19,7 +19,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "viem": "^2.21.26",
-    "x402-next": "^0.7.0"
+    "x402-next": "file:./packages/x402-next"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "checkJs": false,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
