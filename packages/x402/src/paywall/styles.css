@@ -39,26 +39,26 @@ h6 {
   overflow-wrap: break-word;
 }
 
-/* Custom Styles */
+/* Custom Styles - CLAUDE.md Design System */
 :root {
-  --background-color: #f9fafb;
-  --container-background-color: white;
-  --text-color: #111827;
-  --secondary-text-color: #4b5563;
-  --details-background-color: #f9fafb;
-  --details-background-color-hover: #f3f4f6;
-  --button-primary-color: #2563eb;
-  --button-primary-hover-color: #1d4ed8;
-  --button-secondary-color: #eef0f3;
-  --button-secondary-hover-color: #e9ebee;
-  --button-positive-color: #059669;
-  --button-positive-hover-color: #047857;
-  --button-error-color: #ef4444;
-  --button-error-hover-color: #dc2626;
+  --background-color: #0B0B10;
+  --container-background-color: #11151B;
+  --text-color: #E8ECF1;
+  --secondary-text-color: #9AA4B2;
+  --details-background-color: #11151B;
+  --details-background-color-hover: #1A2130;
+  --button-primary-color: #F4C84A;
+  --button-primary-hover-color: #F5D56E;
+  --button-secondary-color: #2DD4FF;
+  --button-secondary-hover-color: #5ADEFF;
+  --button-positive-color: #22C55E;
+  --button-positive-hover-color: #4ADE80;
+  --button-error-color: #EF4444;
+  --button-error-hover-color: #F87171;
 }
 
 .ock-font-family {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Geist Sans", system-ui, -apple-system, sans-serif;
 }
 
 .ock-bg-secondary, .ock-bg-default {
@@ -82,7 +82,7 @@ body {
   min-height: 100vh;
   background-color: var(--background-color);
   font-family:
-    "Inter",
+    "Geist Sans",
     system-ui,
     -apple-system,
     sans-serif;
@@ -144,7 +144,8 @@ body {
 
 .button-primary {
   background-color: var(--button-primary-color);
-  color: white;
+  color: #0B0B10;
+  font-weight: 700;
 }
 
 .button-primary:hover {
