@@ -7,13 +7,11 @@ export default function Home() {
       <div className="flex-grow">
         {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-4 py-20 lg:py-28">
-          <div className="text-center">
-            <div className="flex justify-center mb-8">
-              <div className="w-32">
-                <Logo />
-              </div>
+          <div className="flex flex-col items-center">
+            <div className="w-32 mb-8">
+              <Logo />
             </div>
-            <p className="text-4xl font-semibold text-gray-700 mb-8 font-mono">
+            <p className="text-4xl font-semibold text-gray-700 mb-8 font-mono text-center">
               x402 merchant app demo
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
@@ -21,7 +19,7 @@ export default function Home() {
                 href="/protected"
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-mono transition-colors text-white"
               >
-                Live demo
+                Try an x402 payment
               </Link>
             </div>
           </div>
