@@ -9,8 +9,8 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Address, createPublicClient, formatUnits, http, publicActions } from "viem";
-import { base, baseSepolia } from "viem/chains";
+import { Address, Chain, createPublicClient, formatUnits, http, publicActions } from "viem";
+import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
 import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 
 import { selectPaymentRequirements } from "../../client";
@@ -42,9 +42,26 @@ export function PaywallApp() {
   const x402 = window.x402;
   const amount = x402.amount || 0;
   const testnet = x402.testnet ?? true;
-  const paymentChain = testnet ? baseSepolia : base;
-  const chainName = testnet ? "Base Sepolia" : "Base";
-  const network = testnet ? "base-sepolia" : "base";
+
+  // First, get all payment requirements without filtering by network
+  const allPaymentRequirements = x402 ? [x402.paymentRequirements].flat()[0] : null;
+
+  // Get the network from the first payment requirement
+  const network = allPaymentRequirements?.network || (testnet ? "base-sepolia" : "base");
+
+  // Map network ID to viem chain
+  const getChainFromNetwork = (networkId: string): Chain => {
+    const chainMap: Record<string, Chain> = {
+      "base-sepolia": baseSepolia,
+      "base": base,
+      "bsc-testnet": bscTestnet,
+      "bsc": bsc,
+      // Add more chains as needed
+    };
+    return chainMap[networkId] || baseSepolia; // Default to baseSepolia if unknown
+  };
+
+  const paymentChain = getChainFromNetwork(network);
   const showOnramp = Boolean(!testnet && isConnected && x402.sessionTokenEndpoint);
 
   // Get network and token information from payment requirements
@@ -84,7 +101,7 @@ export function PaywallApp() {
     return "USDC";
   };
 
-  const networkDisplayName = paymentRequirements ? getNetworkDisplayName(paymentRequirements.network) : chainName;
+  const networkDisplayName = getNetworkDisplayName(network);
   const tokenName = getTokenName();
 
   // Get token decimals from payment requirements extra field
@@ -119,7 +136,7 @@ export function PaywallApp() {
       setStatus("");
     } else if (isConnected && paymentChain.id !== connectedChainId) {
       setIsCorrectChain(false);
-      setStatus(`On the wrong network. Please switch to ${chainName}.`);
+      setStatus(`On the wrong network. Please switch to ${networkDisplayName}.`);
     } else {
       setIsCorrectChain(null);
       setStatus("");
@@ -374,7 +391,7 @@ export function PaywallApp() {
               </div>
             ) : (
               <button className="button button-primary" onClick={handleSwitchChain}>
-                Switch to {chainName}
+                Switch to {networkDisplayName}
               </button>
             )}
           </div>
