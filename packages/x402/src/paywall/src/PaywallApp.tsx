@@ -315,8 +315,8 @@ export function PaywallApp() {
         <h1 className="title">{paymentSuccess ? "Payment Successful" : "Payment Required"}</h1>
         {paymentSuccess ? (
           <div className="success-message">
-            <p className="text-green-600 font-semibold">✓ Payment confirmed!</p>
-            <p>Your payment has been processed successfully. You now have access to the protected content.</p>
+            <p className="font-semibold" style={{ color: '#22C55E' }}>✓ Payment confirmed!</p>
+            <p style={{ color: '#E8ECF1' }}>Your payment has been processed successfully. You now have access to the protected content.</p>
           </div>
         ) : (
           <>
