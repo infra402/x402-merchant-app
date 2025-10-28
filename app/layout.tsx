@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'x402.org',
+  title: 'Infra402 Merchant App Demo',
   description: 'A chain-agnostic protocol for web payments',
 };
 

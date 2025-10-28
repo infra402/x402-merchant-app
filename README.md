@@ -19,7 +19,7 @@ cp .env-local .env
 Required environment variables:
 - `RESOURCE_WALLET_ADDRESS`: Your Ethereum address to receive payments
 - `NETWORK`: The network to use (see supported networks below)
-- `NEXT_PUBLIC_FACILITATOR_URL`: Facilitator service URL (default: https://x402.org/facilitator)
+- `NEXT_PUBLIC_FACILITATOR_URL`: Facilitator service URL (default: https://facilitator.infra402.com)
 
 Optional - Custom EIP3009 Payment Token:
 - `PAYMENT_TOKEN_ADDRESS`: Custom token contract address

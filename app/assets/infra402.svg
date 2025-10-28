@@ -1,0 +1,36 @@
+<svg width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="t d" xmlns="http://www.w3.org/2000/svg">
+  <title id="t">Infra402 – x402 Grid Mark</title>
+  <desc id="d">Top-left X, top-right four dots, bottom-left circle, bottom-right equals sign, in a 2×2 grid.</desc>
+
+  <!-- Outer frame + dividers -->
+  <g stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" vector-effect="non-scaling-stroke">
+    <rect x="16" y="16" width="224" height="224"/>
+    <line x1="128" y1="16"  x2="128" y2="240"/>
+    <line x1="16"  y1="128" x2="240" y2="128"/>
+  </g>
+
+  <!-- TL: X -->
+  <g stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" vector-effect="non-scaling-stroke">
+    <line x1="40"  y1="40"  x2="104" y2="104"/>
+    <line x1="104" y1="40"  x2="40"  y2="104"/>
+  </g>
+
+  <!-- TR: four dots -->
+  <g fill="currentColor">
+    <circle cx="160" cy="48"  r="8"/>
+    <circle cx="208" cy="48"  r="8"/>
+    <circle cx="160" cy="96"  r="8"/>
+    <circle cx="208" cy="96"  r="8"/>
+  </g>
+
+  <!-- BL: circle -->
+  <g stroke="currentColor" stroke-width="12" fill="none" vector-effect="non-scaling-stroke">
+    <circle cx="72" cy="184" r="28"/>
+  </g>
+
+  <!-- BR: equals -->
+  <g stroke="currentColor" stroke-width="12" stroke-linecap="round" vector-effect="non-scaling-stroke">
+    <line x1="152" y1="168" x2="216" y2="168"/>
+    <line x1="152" y1="200" x2="216" y2="200"/>
+  </g>
+</svg>
