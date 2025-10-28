@@ -1,3 +1,5 @@
+"use client";
+
 import { createRoot } from "react-dom/client";
 import { Providers } from "./src/Providers";
 import { PaywallApp } from "./src/PaywallApp";
