@@ -18,4 +18,12 @@
 * --danger: #EF4444
 * --border: #1A2130
 
+## Guildlines
+
+* Do not touch (read/write) the .env file without explicilty asking for permissions.
+
+## Project Specific
+
+Re-generate packages/x402/paywall/gen/template.ts on any relevant change.
+
 
