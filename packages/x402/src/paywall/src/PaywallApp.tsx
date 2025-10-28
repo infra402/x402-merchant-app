@@ -22,6 +22,30 @@ import { Spinner } from "./Spinner";
 import { useOnrampSessionToken } from "./useOnrampSessionToken";
 import { ensureValidAmount } from "./utils";
 
+// XBNB/Wrapped Native Token ABI - only the functions we need
+const xbnbABI = [
+  {
+    name: "deposit",
+    type: "function",
+    inputs: [],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    name: "withdraw",
+    type: "function",
+    inputs: [
+      {
+        name: "amount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
 /**
  * Main Paywall App Component
  *
@@ -39,6 +63,13 @@ export function PaywallApp() {
   const [formattedUsdcBalance, setFormattedUsdcBalance] = useState<string>("");
   const [hideBalance, setHideBalance] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // Wrap/Unwrap state
+  const [isWrapMode, setIsWrapMode] = useState(true);
+  const [wrapAmount, setWrapAmount] = useState("");
+  const [nativeBalance, setNativeBalance] = useState<string>("");
+  const [isWrapping, setIsWrapping] = useState(false);
+  const [wrapStatus, setWrapStatus] = useState<string>("");
 
   const x402 = window.x402;
   const amount = x402.amount || 0;
@@ -91,19 +122,20 @@ export function PaywallApp() {
     return networkNames[networkId] || networkId;
   };
 
-  // Get token name from payment requirements
-  const getTokenName = (): string => {
-    // Check if extra field has EIP712 metadata with token name
+  // Get token symbol from payment requirements
+  const getTokenSymbol = (): string => {
+    // Check if extra field has EIP712 metadata with token symbol
     const extra = paymentRequirements?.extra;
-    if (extra && typeof extra === "object" && "name" in extra) {
-      return (extra as { name?: string }).name || "USDC";
+    if (extra && typeof extra === "object" && "symbol" in extra) {
+      const symbol = (extra as { symbol?: string }).symbol;
+      return symbol || "USDC";
     }
 
     return "USDC";
   };
 
   const networkDisplayName = getNetworkDisplayName(network);
-  const tokenName = getTokenName();
+  const tokenSymbol = getTokenSymbol();
 
   // Get token decimals from payment requirements extra field
   const getTokenDecimals = (): number => {
@@ -119,17 +151,72 @@ export function PaywallApp() {
   // Get token address from payment requirements
   const tokenAddress = paymentRequirements?.asset as Address | undefined;
 
-  useEffect(() => {
-    if (address) {
-      handleSwitchChain();
-      checkUSDCBalance();
-    }
-  }, [address]);
-
   const publicClient = createPublicClient({
     chain: paymentChain,
     transport: http(),
   }).extend(publicActions);
+
+  const checkUSDCBalance = useCallback(async () => {
+    if (!address || !tokenAddress) {
+      console.log("checkUSDCBalance: no address or tokenAddress", { address, tokenAddress });
+      return;
+    }
+
+    try {
+      console.log("checkUSDCBalance: fetching for address", address, "token", tokenAddress);
+      // Get token balance using the correct token address from payment requirements
+      const balance = await publicClient.readContract({
+        address: tokenAddress,
+        abi: usdcABI,
+        functionName: "balanceOf",
+        args: [address],
+      });
+      console.log("checkUSDCBalance: raw balance", balance);
+
+      // Get decimals from the contract
+      const decimals = await publicClient.readContract({
+        address: tokenAddress,
+        abi: usdcABI,
+        functionName: "decimals",
+      });
+      console.log("checkUSDCBalance: decimals", decimals);
+
+      const formattedBalance = formatUnits(balance as bigint, decimals as number);
+      console.log("checkUSDCBalance: formatted balance", formattedBalance);
+      setFormattedUsdcBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      setFormattedUsdcBalance("0");
+    }
+  }, [address, publicClient, tokenAddress]);
+
+  const checkNativeBalance = useCallback(async () => {
+    if (!address) {
+      console.log("checkNativeBalance: no address");
+      return;
+    }
+
+    try {
+      console.log("checkNativeBalance: fetching for address", address);
+      const balance = await publicClient.getBalance({ address });
+      console.log("checkNativeBalance: raw balance", balance);
+      const formattedBalance = formatUnits(balance, 18);
+      console.log("checkNativeBalance: formatted balance", formattedBalance);
+      setNativeBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching native balance:", error);
+      setNativeBalance("0");
+    }
+  }, [address, publicClient]);
+
+  useEffect(() => {
+    console.log("useEffect for balance check triggered, address:", address);
+    if (address) {
+      console.log("Calling checkUSDCBalance and checkNativeBalance");
+      checkUSDCBalance();
+      checkNativeBalance();
+    }
+  }, [address]);
 
   useEffect(() => {
     if (isConnected && paymentChain.id === connectedChainId) {
@@ -143,35 +230,6 @@ export function PaywallApp() {
       setStatus("");
     }
   }, [paymentChain.id, connectedChainId, isConnected]);
-
-  const checkUSDCBalance = useCallback(async () => {
-    if (!address || !tokenAddress) {
-      return;
-    }
-
-    try {
-      // Get token balance using the correct token address from payment requirements
-      const balance = await publicClient.readContract({
-        address: tokenAddress,
-        abi: usdcABI,
-        functionName: "balanceOf",
-        args: [address],
-      });
-
-      // Get decimals from the contract
-      const decimals = await publicClient.readContract({
-        address: tokenAddress,
-        abi: usdcABI,
-        functionName: "decimals",
-      });
-
-      const formattedBalance = formatUnits(balance as bigint, decimals as number);
-      setFormattedUsdcBalance(formattedBalance);
-    } catch (error) {
-      console.error("Error fetching token balance:", error);
-      setFormattedUsdcBalance("0");
-    }
-  }, [address, publicClient, tokenAddress]);
 
   const onrampBuyUrl = useMemo(() => {
     if (!sessionToken) {
@@ -222,7 +280,7 @@ export function PaywallApp() {
     setIsPaying(true);
 
     try {
-      setStatus(`Checking ${tokenName} balance...`);
+      setStatus(`Checking ${tokenSymbol} balance...`);
 
       // Get token balance using the correct token address from payment requirements
       if (!tokenAddress) {
@@ -237,7 +295,7 @@ export function PaywallApp() {
       });
 
       if ((balance as bigint) === 0n) {
-        throw new Error(`Insufficient balance. Make sure you have ${tokenName} on ${networkDisplayName}`);
+        throw new Error(`Insufficient balance. Make sure you have ${tokenSymbol} on ${networkDisplayName}`);
       }
 
       setStatus("Creating payment signature...");
@@ -298,6 +356,96 @@ export function PaywallApp() {
     }
   }, [address, x402, paymentRequirements, publicClient, paymentChain, handleSwitchChain]);
 
+  const handleWrap = useCallback(async () => {
+    if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
+      return;
+    }
+
+    await handleSwitchChain();
+
+    const walletClient = wagmiWalletClient.extend(publicActions);
+    setIsWrapping(true);
+    setWrapStatus("");
+
+    try {
+      const amountInWei = (BigInt(Math.round(parseFloat(wrapAmount) * 1e18))).toString();
+
+      setWrapStatus("Wrapping native tokens...");
+      const hash = await walletClient.writeContract({
+        address: tokenAddress,
+        abi: xbnbABI,
+        functionName: "deposit",
+        args: [],
+        value: BigInt(amountInWei),
+      });
+
+      setWrapStatus("Waiting for confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      setWrapStatus("✓ Wrap successful!");
+      setWrapAmount("");
+
+      // Refresh balances
+      await Promise.all([checkNativeBalance(), checkUSDCBalance()]);
+
+      setTimeout(() => setWrapStatus(""), 3000);
+    } catch (error) {
+      setWrapStatus(error instanceof Error ? error.message : "Wrap failed");
+    } finally {
+      setIsWrapping(false);
+    }
+  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance]);
+
+  const handleUnwrap = useCallback(async () => {
+    if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
+      return;
+    }
+
+    await handleSwitchChain();
+
+    const walletClient = wagmiWalletClient.extend(publicActions);
+    setIsWrapping(true);
+    setWrapStatus("");
+
+    try {
+      const amountInWei = (BigInt(Math.round(parseFloat(wrapAmount) * 1e18))).toString();
+
+      setWrapStatus("Unwrapping tokens...");
+      const hash = await walletClient.writeContract({
+        address: tokenAddress,
+        abi: xbnbABI,
+        functionName: "withdraw",
+        args: [BigInt(amountInWei)],
+      });
+
+      setWrapStatus("Waiting for confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      setWrapStatus("✓ Unwrap successful!");
+      setWrapAmount("");
+
+      // Refresh balances
+      await Promise.all([checkNativeBalance(), checkUSDCBalance()]);
+
+      setTimeout(() => setWrapStatus(""), 3000);
+    } catch (error) {
+      setWrapStatus(error instanceof Error ? error.message : "Unwrap failed");
+    } finally {
+      setIsWrapping(false);
+    }
+  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance]);
+
+  // Determine if wrap/unwrap should be shown (only for BSC networks)
+  const showWrapUnwrap = network === "bsc" || network === "bsc-testnet";
+
+  // Get native token symbol
+  const nativeTokenSymbol = network === "bsc" ? "BNB" : network === "bsc-testnet" ? "tBNB" : "";
+
+  // Validation for wrap/unwrap button
+  const canWrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(nativeBalance || "0");
+  const canUnwrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(formattedUsdcBalance || "0");
+  const isWrapUnwrapValid = isWrapMode ? canWrap : canUnwrap;
+
   if (!x402 || !paymentRequirements) {
     return (
       <div className="container">
@@ -322,14 +470,14 @@ export function PaywallApp() {
           <>
             <p style={{ color: '#E8ECF1' }}>
               {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
-              content, please pay ${amount} {networkDisplayName} {tokenName}.
+              content, please pay {amount} {networkDisplayName} {tokenSymbol}.
             </p>
             <p className="token-info" style={{ color: '#9AA4B2' }}>
               <span className="text-sm opacity-70">Token: {tokenAddress}</span>
             </p>
             {testnet && (
               <p className="instructions">
-                Need {networkDisplayName} {tokenName}?{" "}
+                Need {networkDisplayName} {tokenSymbol}?{" "}
                 <a href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer">
                   Get some <u>here</u>.
                 </a>
@@ -351,6 +499,94 @@ export function PaywallApp() {
                 <WalletDropdownDisconnect className="opacity-80" />
               </WalletDropdown>
             </Wallet>
+
+            {/* Wrap/Unwrap Section - Only for BSC networks */}
+            {showWrapUnwrap && isConnected && !paymentSuccess && (
+              <div id="wrap-unwrap-section" className="mt-8">
+                <div className="header">
+                  <h1 className="title">Wrap / Unwrap</h1>
+                  <p className="subtitle">{nativeTokenSymbol}:{tokenSymbol} {'<->'} 1:1</p>
+                </div>
+                <div className="payment-details">
+                  {/* Tabs */}
+                  <div className="flex gap-2" style={{ marginBottom: '0.75rem' }}>
+                    <button
+                      className={`button ${isWrapMode ? 'button-secondary' : 'button'}`}
+                      style={!isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}}
+                      onClick={() => setIsWrapMode(true)}
+                    >
+                      Wrap
+                    </button>
+                    <button
+                      className={`button ${!isWrapMode ? 'button-secondary' : 'button'}`}
+                      style={isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}}
+                      onClick={() => setIsWrapMode(false)}
+                    >
+                      Unwrap
+                    </button>
+                  </div>
+
+                  {/* Balance info */}
+                  <div className="payment-row">
+                    <span className="payment-label">
+                      {isWrapMode ? `${nativeTokenSymbol} Balance:` : `${tokenSymbol} Balance:`}
+                    </span>
+                    <span className="payment-value">
+                      {isWrapMode ? `${nativeBalance || '0'} ${nativeTokenSymbol}` : `${formattedUsdcBalance || '0'} ${tokenSymbol}`}
+                    </span>
+                  </div>
+
+                  {/* Input */}
+                  <div style={{ marginTop: '0.75rem', marginBottom: '0.75rem' }}>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      placeholder={isWrapMode ? `Amount of ${nativeTokenSymbol} to wrap to ${tokenSymbol}` : `Amount of ${tokenSymbol} to unwrap to ${nativeTokenSymbol}`}
+                      value={wrapAmount}
+                      onChange={(e) => setWrapAmount(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg"
+                      style={{
+                        backgroundColor: '#1A2130',
+                        color: '#E8ECF1',
+                        border: '1px solid #2D3748',
+                      }}
+                      disabled={isWrapping}
+                    />
+                  </div>
+
+                  {/* Action button */}
+                  {isCorrectChain ? (
+                    <button
+                      className="button button-primary w-full"
+                      onClick={isWrapMode ? handleWrap : handleUnwrap}
+                      disabled={isWrapping || !isWrapUnwrapValid}
+                      style={!isWrapUnwrapValid ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                      {isWrapping ? <Spinner /> : isWrapMode ? 'Wrap' : 'Unwrap'}
+                    </button>
+                  ) : (
+                    <button className="button button-primary w-full" onClick={handleSwitchChain}>
+                      Switch to {networkDisplayName}
+                    </button>
+                  )}
+
+                  {/* Status message */}
+                  {wrapStatus && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', textAlign: 'center', color: wrapStatus.includes('✓') ? '#22C55E' : '#E8ECF1' }}>
+                      {wrapStatus}
+                    </div>
+                  )}
+
+                  {/* Error message for insufficient balance */}
+                  {wrapAmount && parseFloat(wrapAmount) > 0 && !isWrapUnwrapValid && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', textAlign: 'center', color: '#EF4444' }}>
+                      Insufficient balance
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {isConnected && (
           <div id="payment-section">
             <div className="payment-details">
@@ -365,14 +601,14 @@ export function PaywallApp() {
                 <span className="payment-value">
                   <button className="balance-button" onClick={() => setHideBalance(prev => !prev)}>
                     {formattedUsdcBalance && !hideBalance
-                      ? `$${formattedUsdcBalance} ${tokenName}`
-                      : `••••• ${tokenName}`}
+                      ? `${formattedUsdcBalance} ${tokenSymbol}`
+                      : `••••• ${tokenSymbol}`}
                   </button>
                 </span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Amount:</span>
-                <span className="payment-value">${amount} {tokenName}</span>
+                <span className="payment-value">{amount} {tokenSymbol}</span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Network:</span>

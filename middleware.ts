@@ -25,6 +25,7 @@ const network = (isNativelySupported
 // Custom EIP3009 token configuration (optional)
 const customTokenAddress = process.env.PAYMENT_TOKEN_ADDRESS as Address | undefined;
 const customTokenName = process.env.PAYMENT_TOKEN_NAME;
+const customTokenSymbol = process.env.PAYMENT_TOKEN_SYMBOL;
 const customTokenVersion = process.env.PAYMENT_TOKEN_VERSION;
 const customTokenDecimals = process.env.PAYMENT_TOKEN_DECIMALS
   ? parseInt(process.env.PAYMENT_TOKEN_DECIMALS, 10)
@@ -58,6 +59,7 @@ const getPaymentPrice = () => {
         eip712: {
           name: customTokenName,
           version: customTokenVersion,
+          symbol: customTokenSymbol,
         },
       },
     };
