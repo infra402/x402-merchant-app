@@ -1,12 +1,18 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import type { ReactNode } from "react";
-import type { Chain } from "viem";
+import { http, type Chain } from "viem";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
+import { WagmiProvider, createConfig } from "wagmi";
+import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./window.d.ts";
 
 type ProvidersProps = {
   children: ReactNode;
 };
+
+// Create QueryClient outside component to avoid recreating on each render
+const queryClient = new QueryClient();
 
 /**
  * Providers component for the paywall
@@ -35,10 +41,28 @@ export function Providers({ children }: ProvidersProps) {
 
   const chain = getChainFromNetwork(network);
 
+  // Create wagmi config with all supported chains
+  const wagmiConfig = createConfig({
+    chains: [baseSepolia, base, bscTestnet, bsc],
+    connectors: [
+      injected(),
+      coinbaseWallet({ appName: appName || "Payment App" }),
+      walletConnect({ projectId: "your-project-id" }),
+    ],
+    transports: {
+      [baseSepolia.id]: http(),
+      [base.id]: http(),
+      [bscTestnet.id]: http(),
+      [bsc.id]: http(),
+    },
+  });
+
   return (
-    <OnchainKitProvider
-      apiKey={cdpClientKey || undefined}
-      chain={chain}
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <OnchainKitProvider
+          apiKey={cdpClientKey || undefined}
+          chain={chain}
       config={{
         appearance: {
           mode: "light",
@@ -58,5 +82,7 @@ export function Providers({ children }: ProvidersProps) {
     >
       {children}
     </OnchainKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
