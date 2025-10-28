@@ -9,13 +9,14 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createPublicClient, formatUnits, http, publicActions } from "viem";
+import { Address, createPublicClient, formatUnits, http, publicActions } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 
 import { selectPaymentRequirements } from "../../client";
 import { exact } from "../../schemes";
 import { getUSDCBalance } from "../../shared/evm";
+import { usdcABI } from "../../types/shared/evm/erc20PermitABI";
 
 import { Spinner } from "./Spinner";
 import { useOnrampSessionToken } from "./useOnrampSessionToken";
@@ -86,6 +87,20 @@ export function PaywallApp() {
   const networkDisplayName = paymentRequirements ? getNetworkDisplayName(paymentRequirements.network) : chainName;
   const tokenName = getTokenName();
 
+  // Get token decimals from payment requirements extra field
+  const getTokenDecimals = (): number => {
+    const extra = paymentRequirements?.extra;
+    if (extra && typeof extra === "object" && "decimals" in extra) {
+      return (extra as { decimals?: number }).decimals || 6;
+    }
+    return 6; // Default to 6 decimals (USDC standard)
+  };
+
+  const tokenDecimals = getTokenDecimals();
+
+  // Get token address from payment requirements
+  const tokenAddress = paymentRequirements?.asset as Address | undefined;
+
   useEffect(() => {
     if (address) {
       handleSwitchChain();
@@ -112,13 +127,33 @@ export function PaywallApp() {
   }, [paymentChain.id, connectedChainId, isConnected]);
 
   const checkUSDCBalance = useCallback(async () => {
-    if (!address) {
+    if (!address || !tokenAddress) {
       return;
     }
-    const balance = await getUSDCBalance(publicClient, address);
-    const formattedBalance = formatUnits(balance, 6);
-    setFormattedUsdcBalance(formattedBalance);
-  }, [address, publicClient]);
+
+    try {
+      // Get token balance using the correct token address from payment requirements
+      const balance = await publicClient.readContract({
+        address: tokenAddress,
+        abi: usdcABI,
+        functionName: "balanceOf",
+        args: [address],
+      });
+
+      // Get decimals from the contract
+      const decimals = await publicClient.readContract({
+        address: tokenAddress,
+        abi: usdcABI,
+        functionName: "decimals",
+      });
+
+      const formattedBalance = formatUnits(balance as bigint, decimals as number);
+      setFormattedUsdcBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      setFormattedUsdcBalance("0");
+    }
+  }, [address, publicClient, tokenAddress]);
 
   const onrampBuyUrl = useMemo(() => {
     if (!sessionToken) {
@@ -176,9 +211,20 @@ export function PaywallApp() {
 
     try {
       setStatus(`Checking ${tokenName} balance...`);
-      const balance = await getUSDCBalance(publicClient, address);
 
-      if (balance === 0n) {
+      // Get token balance using the correct token address from payment requirements
+      if (!tokenAddress) {
+        throw new Error("Token address not found in payment requirements");
+      }
+
+      const balance = await publicClient.readContract({
+        address: tokenAddress,
+        abi: usdcABI,
+        functionName: "balanceOf",
+        args: [address],
+      });
+
+      if ((balance as bigint) === 0n) {
         throw new Error(`Insufficient balance. Make sure you have ${tokenName} on ${networkDisplayName}`);
       }
 
