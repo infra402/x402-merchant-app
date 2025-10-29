@@ -472,10 +472,10 @@ export function PaywallApp() {
         )}
       </div>
 
-      <div className="content w-full">
+      <div className="content" style={{ width: '100%', minWidth: '100%' }}>
         {!paymentSuccess && (
           <>
-            <div style={{ marginTop: '2rem' }}>
+            <div style={{ marginTop: '2rem', width: '100%' }}>
               <CustomConnectButton />
             </div>
 
