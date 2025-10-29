@@ -267,7 +267,6 @@ export function PaywallApp() {
 
   const handleSuccessfulResponse = useCallback(async (response: Response) => {
     setPaymentSuccess(true);
-    setStatus("Payment successful! Access granted.");
   }, []);
 
   const handleSwitchChain = useCallback(async () => {
@@ -596,7 +595,10 @@ export function PaywallApp() {
                       className="button button-primary w-full"
                       onClick={isWrapMode ? handleWrap : handleUnwrap}
                       disabled={isWrapping || !isWrapUnwrapValid}
-                      style={!isWrapUnwrapValid ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                      style={{
+                        minHeight: '48px',
+                        ...(!isWrapUnwrapValid ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                      }}
                     >
                       {isWrapping ? <Spinner /> : isWrapMode ? 'Wrap' : 'Unwrap'}
                     </button>
@@ -664,7 +666,10 @@ export function PaywallApp() {
                     className="button button-primary"
                     onClick={handlePayment}
                     disabled={isPaying || hasInsufficientBalance}
-                    style={hasInsufficientBalance ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    style={{
+                      minHeight: '48px',
+                      ...(hasInsufficientBalance ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                    }}
                   >
                     {isPaying ? <Spinner /> : "Pay now"}
                   </button>
@@ -697,7 +702,6 @@ export function PaywallApp() {
         )}
           </>
         )}
-        {status && <div className="status">{status}</div>}
       </div>
     </div>
   );
