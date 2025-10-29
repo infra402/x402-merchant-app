@@ -85,7 +85,7 @@ export const middleware = paymentMiddleware(
   },
   {
     appName: "x402 Merchant App",
-    appLogo: "/favicon.svg",
+    appLogo: "/web-app-manifest-512x512.png",
   },
 );
 

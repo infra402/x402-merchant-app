@@ -234,4 +234,9 @@ body {
   color: var(--text-color);
 }
 
-/* OnchainKit wallet component overrides removed - using auto theme mode */
+/* OnchainKit wallet component overrides */
+/* Force dark text color on connected wallet button to match other primary buttons */
+.button-primary .ock-text-foreground,
+.button-primary .ock-text-foreground-muted {
+  color: #0B0B10 !important;
+}
