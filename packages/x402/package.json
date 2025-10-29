@@ -5,6 +5,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "start": "tsx --env-file=.env index.ts",
+    "build:paywall": "tsx src/paywall/build.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
