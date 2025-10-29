@@ -491,7 +491,7 @@ export function PaywallApp() {
         {!paymentSuccess && (
           <>
             <Wallet className="w-full">
-              <ConnectWallet className="w-full py-3" disconnectedLabel="Connect wallet">
+              <ConnectWallet className="button button-primary w-full" disconnectedLabel="Connect wallet">
                 <Avatar className="h-5 w-5 opacity-80" />
                 <Name className="opacity-80 text-sm" />
               </ConnectWallet>
