@@ -110,6 +110,7 @@ export function PaywallApp() {
   const paymentChain = getChainFromNetwork(network);
 
   // Get network and token information from payment requirements
+  // If payment requirements don't exist for current network, use default USDC config
   const paymentRequirements = x402
     ? selectPaymentRequirements([x402.paymentRequirements].flat(), network, "exact")
     : null;
@@ -135,22 +136,23 @@ export function PaywallApp() {
     return networkNames[networkId] || networkId;
   };
 
-  // Get token symbol from payment requirements
+  // Get token symbol from payment requirements or default to USDC
   const getTokenSymbol = (): string => {
-    // Check if extra field has EIP712 metadata with token symbol
+    // First check payment requirements
     const extra = paymentRequirements?.extra;
     if (extra && typeof extra === "object" && "symbol" in extra) {
       const symbol = (extra as { symbol?: string }).symbol;
-      return symbol || "USDC";
+      if (symbol) return symbol;
     }
 
+    // If no payment requirements for this network, return default USDC
     return "USDC";
   };
 
   const networkDisplayName = getNetworkDisplayName(network);
   const tokenSymbol = getTokenSymbol();
 
-  // Get token decimals from payment requirements extra field
+  // Get token decimals from payment requirements or default to 6
   const getTokenDecimals = (): number => {
     const extra = paymentRequirements?.extra;
     if (extra && typeof extra === "object" && "decimals" in extra) {
@@ -161,8 +163,23 @@ export function PaywallApp() {
 
   const tokenDecimals = getTokenDecimals();
 
-  // Get token address from payment requirements
-  const tokenAddress = paymentRequirements?.asset as Address | undefined;
+  // Get token address from payment requirements or from chainConfig
+  const getTokenAddress = (): Address | undefined => {
+    // First try payment requirements
+    if (paymentRequirements?.asset) {
+      return paymentRequirements.asset as Address;
+    }
+
+    // Fallback to chainConfig for default USDC address
+    const chainConfig = x402?.config?.chainConfig;
+    if (chainConfig && chainConfig[network]) {
+      return chainConfig[network].usdcAddress as Address;
+    }
+
+    return undefined;
+  };
+
+  const tokenAddress = getTokenAddress();
 
   const publicClient = createPublicClient({
     chain: paymentChain,
