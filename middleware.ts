@@ -84,7 +84,7 @@ export const middleware = paymentMiddleware(
     url: facilitatorUrl,
   },
   {
-    appName: "Next x402 Demo",
+    appName: "x402 Merchant App",
     appLogo: "/x402-icon-blue.png",
   },
 );

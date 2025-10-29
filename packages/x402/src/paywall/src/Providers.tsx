@@ -45,8 +45,76 @@ export function Providers({ children }: ProvidersProps) {
   const wagmiConfig = createConfig({
     chains: [baseSepolia, base, bscTestnet, bsc],
     connectors: [
+      // Generic EIP-6963 detection (MetaMask, Rabby, Trust, Frame, Rainbow, Brave)
       injected(),
-      coinbaseWallet({ appName: appName || "Payment App" }),
+
+      // Explicit OKX Wallet
+      injected({
+        target() {
+          return {
+            id: 'okxWallet',
+            name: 'OKX Wallet',
+            provider: typeof window !== 'undefined' ? window.okxwallet : undefined,
+          };
+        },
+      }),
+
+      // Explicit Bybit Wallet
+      injected({
+        target() {
+          return {
+            id: 'bybitWallet',
+            name: 'Bybit Wallet',
+            provider: typeof window !== 'undefined' ? window.bybitWallet : undefined,
+          };
+        },
+      }),
+
+      // Explicit Phantom Wallet (for EVM mode)
+      injected({
+        target() {
+          return {
+            id: 'phantom',
+            name: 'Phantom',
+            provider: typeof window !== 'undefined' ? window.phantom?.ethereum : undefined,
+          };
+        },
+      }),
+
+      // Explicit Coin98 Wallet
+      injected({
+        target() {
+          return {
+            id: 'coin98',
+            name: 'Coin98 Wallet',
+            provider: typeof window !== 'undefined' ? window.coin98 : undefined,
+          };
+        },
+      }),
+
+      // Explicit TokenPocket
+      injected({
+        target() {
+          return {
+            id: 'tokenpocket',
+            name: 'TokenPocket',
+            provider: typeof window !== 'undefined' ? window.tokenpocket : undefined,
+          };
+        },
+      }),
+
+      // Explicit Bitget Wallet (BitKeep)
+      injected({
+        target() {
+          return {
+            id: 'bitkeep',
+            name: 'Bitget Wallet',
+            provider: typeof window !== 'undefined' ? window.bitkeep : undefined,
+          };
+        },
+      }),
+
+      coinbaseWallet({ appName: appName || "x402 Merchant App" }),
       walletConnect({ projectId: "your-project-id" }),
     ],
     transports: {
@@ -65,7 +133,7 @@ export function Providers({ children }: ProvidersProps) {
           chain={chain}
       config={{
         appearance: {
-          mode: "light",
+          mode: "auto",
           theme: "base",
           name: appName || undefined,
           logo: appLogo || undefined,

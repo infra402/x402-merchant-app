@@ -21,5 +21,14 @@ declare global {
         >;
       };
     };
+    // Wallet provider declarations
+    okxwallet?: any;
+    bybitWallet?: any;
+    phantom?: {
+      ethereum?: any;
+    };
+    coin98?: any;
+    tokenpocket?: any;
+    bitkeep?: any;
   }
 }
