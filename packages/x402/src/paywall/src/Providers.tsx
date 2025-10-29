@@ -1,9 +1,26 @@
 import '@rainbow-me/rainbowkit/styles.css';
-import { getDefaultConfig, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, darkTheme, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+  injectedWallet,
+  metaMaskWallet,
+  coinbaseWallet,
+  trustWallet,
+  binanceWallet,
+  okxWallet,
+  bybitWallet,
+  rainbowWallet,
+  rabbyWallet,
+  phantomWallet,
+  tokenPocketWallet,
+  safepalWallet,
+  zerionWallet,
+  braveWallet,
+  imTokenWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import type { ReactNode } from "react";
 import { http, type Chain } from "viem";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider, createConfig } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./window.d.ts";
 
@@ -24,12 +41,45 @@ const queryClient = new QueryClient();
 export function Providers({ children }: ProvidersProps) {
   const { appName } = window.x402;
 
-  // Create wagmi config with RainbowKit's getDefaultConfig
-  // This automatically includes injected wallet detection (MetaMask, OKX, Phantom, etc.)
-  const wagmiConfig = getDefaultConfig({
-    appName: appName || "x402 Merchant App",
-    projectId: "disabled", // No WalletConnect support as requested
-    chains: [baseSepolia, base, bscTestnet, bsc] as readonly [Chain, ...Chain[]],
+  // Configure custom wallet list with popular wallets for BNB Chain, Base, and Ethereum
+  const connectors = connectorsForWallets(
+    [
+      {
+        groupName: 'Popular',
+        wallets: [
+          injectedWallet, // Always first - auto-detects any installed browser extension
+          metaMaskWallet, // #1 globally (143M users)
+          coinbaseWallet, // Native Base support (70M users)
+          trustWallet, // Dominant on BNB Chain (115M+ users)
+          binanceWallet, // BNB Chain ecosystem
+          okxWallet, // 10% Asia market share
+          bybitWallet, // Strong Asia presence
+        ],
+      },
+      {
+        groupName: 'More Wallets',
+        wallets: [
+          rainbowWallet, // Ethereum/L2 focused
+          rabbyWallet, // DeFi advanced features
+          phantomWallet, // Multi-chain expansion
+          tokenPocketWallet, // 30M users, Asia popular
+          safepalWallet, // 20M users, BSC focused
+          zerionWallet, // Portfolio tracking
+          braveWallet, // Browser integrated
+          imTokenWallet, // Asia established (35+ chains)
+        ],
+      },
+    ],
+    {
+      appName: appName || "x402 Merchant App",
+      projectId: "disabled", // No WalletConnect support
+    }
+  );
+
+  // Create wagmi config with custom connectors
+  const wagmiConfig = createConfig({
+    connectors,
+    chains: [baseSepolia, base, bscTestnet, bsc],
     transports: {
       [baseSepolia.id]: http(),
       [base.id]: http(),
