@@ -465,7 +465,8 @@ export function PaywallApp() {
   const canUnwrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(formattedUsdcBalance || "0");
   const isWrapUnwrapValid = isWrapMode ? canWrap : canUnwrap;
 
-  if (!x402 || !paymentRequirements) {
+  // Only check if x402 exists - paymentRequirements can be null (will fallback to chainConfig)
+  if (!x402) {
     return (
       <div className="container">
         <div className="header">
