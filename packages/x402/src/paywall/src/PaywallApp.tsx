@@ -452,6 +452,22 @@ export function PaywallApp() {
   // Get native token symbol
   const nativeTokenSymbol = network === "bsc" ? "BNB" : network === "bsc-testnet" ? "tBNB" : "";
 
+  // Get explorer URL for token contract
+  const getTokenExplorerUrl = (): string | null => {
+    if (!tokenAddress) return null;
+
+    const explorerMap: Record<string, string> = {
+      "base": `https://basescan.org/token/${tokenAddress}`,
+      "base-sepolia": `https://sepolia.basescan.org/token/${tokenAddress}`,
+      "bsc": `https://bscscan.com/token/${tokenAddress}`,
+      "bsc-testnet": `https://testnet.bscscan.com/token/${tokenAddress}`,
+    };
+
+    return explorerMap[network] || null;
+  };
+
+  const tokenExplorerUrl = getTokenExplorerUrl();
+
   // Validation for wrap/unwrap button
   const canWrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(nativeBalance || "0");
   const canUnwrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(formattedUsdcBalance || "0");
@@ -485,13 +501,38 @@ export function PaywallApp() {
         ) : (
           <>
             <p style={{ color: '#E8ECF1' }}>
-              {customMessage
-                ? customMessage.replace('{amount}', String(amount)).replace('{network}', networkDisplayName).replace('{symbol}', tokenSymbol)
-                : defaultMessage.replace('{amount}', String(amount)).replace('{network}', networkDisplayName).replace('{symbol}', tokenSymbol)
-              }
-            </p>
-            <p className="token-info" style={{ color: '#9AA4B2' }}>
-              <span className="text-sm opacity-70">{tokenSymbol}: {tokenAddress}</span>
+              {(() => {
+                const message = customMessage || defaultMessage;
+                const formattedMessage = message
+                  .replace('{amount}', String(amount))
+                  .replace('{network}', networkDisplayName);
+
+                // Split the message by {symbol} to insert the clickable link
+                const parts = formattedMessage.split('{symbol}');
+
+                if (parts.length === 2 && tokenExplorerUrl) {
+                  return (
+                    <>
+                      {parts[0]}
+                      <a
+                        href={tokenExplorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#2DD4FF',
+                          textDecoration: 'underline',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {tokenSymbol}
+                      </a>
+                      {parts[1]}
+                    </>
+                  );
+                } else {
+                  return formattedMessage.replace('{symbol}', tokenSymbol);
+                }
+              })()}
             </p>
             {testnet && (
               <p className="instructions">

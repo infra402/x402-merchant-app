@@ -24,6 +24,6 @@
 
 ## Project Specific
 
-Re-generate packages/x402/paywall/gen/template.ts on any relevant change.
+Re-generate paywall template with "npm run build:paywall" on any relevant change under packages/x402/src/paywall/.
 
 
