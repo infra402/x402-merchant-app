@@ -475,30 +475,38 @@ export function PaywallApp() {
       <div className="content w-full">
         {!paymentSuccess && (
           <>
-            <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+            <div style={{ marginTop: '2rem' }}>
               <ConnectButton />
             </div>
 
             {/* Wrap/Unwrap Section - Only for BSC networks */}
             {showWrapUnwrap && isConnected && !paymentSuccess && (
-              <div id="wrap-unwrap-section" className="mt-8">
+              <div id="wrap-unwrap-section" style={{ marginTop: '1rem' }}>
                 <div className="header">
                   <h1 className="title">Wrap / Unwrap</h1>
                   <p className="subtitle">{nativeTokenSymbol}:{tokenSymbol} {'<->'} 1:1</p>
                 </div>
                 <div className="payment-details">
                   {/* Tabs */}
-                  <div className="flex gap-2" style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', marginBottom: '0.75rem' }}>
                     <button
                       className={`button ${isWrapMode ? 'button-secondary' : 'button'}`}
-                      style={!isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}}
+                      style={{
+                        ...(!isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}),
+                        flex: 1,
+                        width: 'auto'
+                      }}
                       onClick={() => setIsWrapMode(true)}
                     >
                       Wrap
                     </button>
                     <button
                       className={`button ${!isWrapMode ? 'button-secondary' : 'button'}`}
-                      style={isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}}
+                      style={{
+                        ...(isWrapMode ? { backgroundColor: '#1A2130', color: '#9AA4B2' } : {}),
+                        flex: 1,
+                        width: 'auto'
+                      }}
                       onClick={() => setIsWrapMode(false)}
                     >
                       Unwrap
@@ -523,11 +531,15 @@ export function PaywallApp() {
                       placeholder={isWrapMode ? `Amount of ${nativeTokenSymbol} to wrap to ${tokenSymbol}` : `Amount of ${tokenSymbol} to unwrap to ${nativeTokenSymbol}`}
                       value={wrapAmount}
                       onChange={(e) => setWrapAmount(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg"
                       style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
                         backgroundColor: '#1A2130',
                         color: '#E8ECF1',
-                        border: '1px solid #2D3748',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        fontSize: '1rem',
+                        fontWeight: '600',
                       }}
                       disabled={isWrapping}
                     />
