@@ -452,7 +452,7 @@ export function PaywallApp() {
               content, please pay {amount} {networkDisplayName} {tokenSymbol}.
             </p>
             <p className="token-info" style={{ color: '#9AA4B2' }}>
-              <span className="text-sm opacity-70">Token: {tokenAddress}</span>
+              <span className="text-sm opacity-70">{tokenSymbol}: {tokenAddress}</span>
             </p>
             {testnet && (
               <p className="instructions">

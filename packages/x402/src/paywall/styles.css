@@ -234,7 +234,14 @@ body {
 }
 
 /* RainbowKit component customization */
-/* Ensure RainbowKit buttons use full width */
+/* Ensure RainbowKit buttons use full width and proper vertical spacing */
 .w-full > div[data-rk] {
   width: 100%;
+}
+
+/* Fix ConnectButton vertical padding to match other buttons */
+button[data-rk] {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+  min-height: auto !important;
 }
