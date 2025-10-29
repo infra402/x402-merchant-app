@@ -105,10 +105,12 @@ const networkConfigs: NetworkRouteConfig[] = networks.map((networkEnv, index) =>
   };
 });
 
-// Build routes object with all networks configured for the same path
-// The middleware will match the user's connected wallet network with one of these configs
-const routes: Record<string, NetworkRouteConfig | NetworkRouteConfig[]> = {
-  "/protected": networkConfigs.length === 1 ? networkConfigs[0] : networkConfigs,
+// Use first network configuration (for now, multi-network requires user to configure one primary network)
+// TODO: Future enhancement - support dynamic network switching based on connected wallet
+const primaryNetworkConfig = networkConfigs[0];
+
+const routes: Record<string, NetworkRouteConfig> = {
+  "/protected": primaryNetworkConfig,
 };
 
 // Use first wallet address or empty string
