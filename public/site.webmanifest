@@ -1,6 +1,6 @@
 {
-  "name": "x402.org",
-  "short_name": "x402",
+  "name": "infra402.com",
+  "short_name": "infra402",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#f4c84a",
+  "background_color": "#0b0b10",
   "display": "standalone"
 }
