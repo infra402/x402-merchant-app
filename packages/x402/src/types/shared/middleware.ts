@@ -26,6 +26,8 @@ export type PaymentMiddlewareConfig = {
   discoverable?: boolean;
   customPaywallHtml?: string;
   resource?: Resource;
+  title?: string;
+  message?: string;
   errorMessages?: {
     paymentRequired?: string;
     invalidPayment?: string;

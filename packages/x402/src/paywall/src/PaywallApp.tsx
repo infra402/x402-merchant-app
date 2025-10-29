@@ -436,10 +436,14 @@ export function PaywallApp() {
     );
   }
 
+  const customTitle = x402.paywallTitle;
+  const customMessage = x402.paywallMessage;
+  const defaultMessage = `To access this protected content, please pay {amount} {network} {symbol}.`;
+
   return (
     <div className="container gap-8">
       <div className="header">
-        <h1 className="title">{paymentSuccess ? "Payment Successful" : "Payment Required"}</h1>
+        <h1 className="title">{paymentSuccess ? "Payment Successful" : (customTitle || "Payment Required")}</h1>
         {paymentSuccess ? (
           <div className="success-message">
             <p className="font-semibold" style={{ color: '#22C55E' }}>✓ Payment confirmed!</p>
@@ -448,8 +452,10 @@ export function PaywallApp() {
         ) : (
           <>
             <p style={{ color: '#E8ECF1' }}>
-              {paymentRequirements.description && `${paymentRequirements.description}.`} To access this
-              content, please pay {amount} {networkDisplayName} {tokenSymbol}.
+              {customMessage
+                ? customMessage.replace('{amount}', String(amount)).replace('{network}', networkDisplayName).replace('{symbol}', tokenSymbol)
+                : defaultMessage.replace('{amount}', String(amount)).replace('{network}', networkDisplayName).replace('{symbol}', tokenSymbol)
+              }
             </p>
             <p className="token-info" style={{ color: '#9AA4B2' }}>
               <span className="text-sm opacity-70">{tokenSymbol}: {tokenAddress}</span>
@@ -469,7 +475,7 @@ export function PaywallApp() {
       <div className="content w-full">
         {!paymentSuccess && (
           <>
-            <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
               <ConnectButton />
             </div>
 

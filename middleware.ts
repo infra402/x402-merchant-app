@@ -8,6 +8,11 @@ import {
 const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL as Resource;
 const payTo = process.env.RESOURCE_WALLET_ADDRESS as Address;
 
+// Customizable paywall content
+const paywallTitle = process.env.PAYWALL_TITLE || "";
+const paywallMessage = process.env.PAYWALL_MESSAGE || "";
+const paywallAmount = process.env.PAYWALL_AMOUNT || "0.01";
+
 // Auto-detect if network is natively supported or requires custom facilitator
 const networkEnv = process.env.NETWORK;
 const isNativelySupported =
@@ -45,11 +50,13 @@ const getPaymentPrice = () => {
 
   // Use custom token if fully configured
   if (customTokenAddress && customTokenName && customTokenVersion && customTokenDecimals) {
-    // Calculate amount: 0.01 tokens = 0.01 * 10^decimals
+    // Calculate amount based on PAYWALL_AMOUNT env variable (default: 0.01)
+    // Parse the amount and convert to the token's smallest unit
     // For 18 decimals: 0.01 * 10^18 = 10000000000000000
     // For 6 decimals: 0.01 * 10^6 = 10000
     // Use BigInt to avoid JavaScript precision loss with large numbers
-    const amount = ((BigInt(1) * BigInt(10) ** BigInt(customTokenDecimals)) / BigInt(100)).toString();
+    const amountFloat = parseFloat(paywallAmount);
+    const amount = ((BigInt(Math.floor(amountFloat * 100)) * BigInt(10) ** BigInt(customTokenDecimals)) / BigInt(100)).toString();
 
     return {
       amount,
@@ -65,8 +72,8 @@ const getPaymentPrice = () => {
     };
   }
 
-  // Use default USDC for natively supported networks
-  return "$0.01";
+  // Use default USDC for natively supported networks with custom amount
+  return `$${paywallAmount}`;
 };
 
 export const middleware = paymentMiddleware(
@@ -77,7 +84,9 @@ export const middleware = paymentMiddleware(
       network,
       config: {
         description: "Access to protected content",
-      },
+        title: paywallTitle,
+        message: paywallMessage,
+      } as any, // TypeScript workaround for custom properties
     },
   },
   {

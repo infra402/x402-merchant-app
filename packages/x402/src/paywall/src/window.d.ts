@@ -11,6 +11,8 @@ declare global {
       appName?: string;
       appLogo?: string;
       sessionTokenEndpoint?: string;
+      paywallTitle?: string;
+      paywallMessage?: string;
       config: {
         chainConfig: Record<
           string,

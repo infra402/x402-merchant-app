@@ -124,6 +124,8 @@ export function paymentMiddleware(
       resource,
       errorMessages,
       discoverable,
+      title,
+      message,
     } = config;
 
     const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
@@ -269,6 +271,8 @@ export function paymentMiddleware(
               appLogo: paywall?.appLogo,
               appName: paywall?.appName,
               sessionTokenEndpoint: paywall?.sessionTokenEndpoint,
+              paywallTitle: title,
+              paywallMessage: message,
             });
           return new NextResponse(html, {
             status: 402,
