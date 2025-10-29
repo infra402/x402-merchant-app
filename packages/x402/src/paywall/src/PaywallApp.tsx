@@ -1,6 +1,5 @@
 "use client";
 
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Address, Chain, createPublicClient, formatUnits, http, publicActions } from "viem";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
@@ -8,6 +7,7 @@ import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 
 import { selectPaymentRequirements } from "../../client";
 import { exact } from "../../schemes";
+import { CustomConnectButton } from "./CustomConnectButton";
 import { getUSDCBalance } from "../../shared/evm";
 import { usdcABI } from "../../types/shared/evm/erc20PermitABI";
 
@@ -476,7 +476,7 @@ export function PaywallApp() {
         {!paymentSuccess && (
           <>
             <div style={{ marginTop: '2rem' }}>
-              <ConnectButton />
+              <CustomConnectButton />
             </div>
 
             {/* Wrap/Unwrap Section - Only for BSC networks */}
