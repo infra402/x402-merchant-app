@@ -14,6 +14,7 @@ interface PaywallOptions {
   paywallTitle?: string;
   paywallMessage?: string;
   networksEnv?: string;
+  amountsEnv?: string;
 }
 
 /**
@@ -58,6 +59,7 @@ export function getPaywallHtml({
   paywallTitle,
   paywallMessage,
   networksEnv,
+  amountsEnv,
 }: PaywallOptions): string {
   const logOnTestnet = testnet
     ? "console.log('Payment requirements initialized:', window.x402);"
@@ -81,6 +83,7 @@ export function getPaywallHtml({
       paywallTitle: "${escapeString(paywallTitle || "")}",
       paywallMessage: "${escapeString(paywallMessage || "")}",
       networksEnv: "${escapeString(networksEnv || "")}",
+      amountsEnv: "${escapeString(amountsEnv || "")}",
     };
     ${logOnTestnet}
   </script>`;

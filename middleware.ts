@@ -126,6 +126,7 @@ export const middleware = paymentMiddleware(
     appName: "x402 Merchant App",
     appLogo: "/web-app-manifest-512x512.png",
     networksEnv: process.env.NETWORKS || "base-sepolia",
+    amountsEnv: process.env.PAYWALL_AMOUNTS || "0.01",
   },
 );
 

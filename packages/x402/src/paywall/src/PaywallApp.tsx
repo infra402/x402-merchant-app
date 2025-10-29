@@ -63,14 +63,37 @@ export function PaywallApp() {
   const [wrapStatus, setWrapStatus] = useState<string>("");
 
   const x402 = window.x402;
-  const amount = x402.amount || 0;
   const testnet = x402.testnet ?? true;
+
+  // Parse configured networks and amounts from env
+  const networksEnv = x402.networksEnv || 'base-sepolia';
+  const amountsEnv = x402.amountsEnv || '0.01';
+  const networks = networksEnv.split(',').map(n => n.trim());
+  const amounts = amountsEnv.split(',').map(a => a.trim());
+
+  // Map chainId to network key
+  const getNetworkFromChainId = (chainId: number | undefined): string => {
+    if (!chainId) return networks[0] || 'base-sepolia';
+
+    const chainToNetworkMap: Record<number, string> = {
+      84532: 'base-sepolia',
+      8453: 'base',
+      97: 'bsc-testnet',
+      56: 'bsc',
+    };
+
+    return chainToNetworkMap[chainId] || networks[0] || 'base-sepolia';
+  };
+
+  // Determine active network from connected chain
+  const network = isConnected ? getNetworkFromChainId(connectedChainId) : networks[0] || 'base-sepolia';
+
+  // Get amount for current network
+  const networkIndex = networks.indexOf(network);
+  const amount = networkIndex >= 0 && amounts[networkIndex] ? parseFloat(amounts[networkIndex]) : (amounts[0] ? parseFloat(amounts[0]) : 0.01);
 
   // First, get all payment requirements without filtering by network
   const allPaymentRequirements = x402 ? [x402.paymentRequirements].flat()[0] : null;
-
-  // Get the network from the first payment requirement
-  const network = allPaymentRequirements?.network || (testnet ? "base-sepolia" : "base");
 
   // Map network ID to viem chain
   const getChainFromNetwork = (networkId: string): Chain => {

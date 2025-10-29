@@ -14,6 +14,7 @@ declare global {
       paywallTitle?: string;
       paywallMessage?: string;
       networksEnv?: string;
+      amountsEnv?: string;
       config: {
         chainConfig: Record<
           string,

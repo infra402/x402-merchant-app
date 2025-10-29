@@ -16,6 +16,7 @@ export type PaywallConfig = {
   appLogo?: string;
   sessionTokenEndpoint?: string;
   networksEnv?: string;
+  amountsEnv?: string;
 };
 
 export type PaymentMiddlewareConfig = {

@@ -274,6 +274,7 @@ export function paymentMiddleware(
               paywallTitle: title,
               paywallMessage: message,
               networksEnv: paywall?.networksEnv,
+              amountsEnv: paywall?.amountsEnv,
             });
           return new NextResponse(html, {
             status: 402,
