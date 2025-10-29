@@ -273,6 +273,7 @@ export function paymentMiddleware(
               sessionTokenEndpoint: paywall?.sessionTokenEndpoint,
               paywallTitle: title,
               paywallMessage: message,
+              networksEnv: paywall?.networksEnv,
             });
           return new NextResponse(html, {
             status: 402,

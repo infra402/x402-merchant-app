@@ -13,6 +13,7 @@ declare global {
       sessionTokenEndpoint?: string;
       paywallTitle?: string;
       paywallMessage?: string;
+      networksEnv?: string;
       config: {
         chainConfig: Record<
           string,

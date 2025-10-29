@@ -66,10 +66,33 @@ const connectors = connectorsForWallets(
   }
 );
 
+// Parse configured networks from environment variable
+const getConfiguredChains = () => {
+  if (typeof window === 'undefined') return [baseSepolia, base, bscTestnet, bsc];
+
+  const networksEnv = window.x402?.networksEnv || 'base-sepolia';
+  const networkKeys = networksEnv.split(',').map(n => n.trim());
+
+  const chainMap: Record<string, typeof base> = {
+    'base': base,
+    'base-sepolia': baseSepolia,
+    'bsc': bsc,
+    'bsc-testnet': bscTestnet,
+  };
+
+  const configuredChains = networkKeys
+    .map(key => chainMap[key])
+    .filter(chain => chain !== undefined);
+
+  return configuredChains.length > 0 ? configuredChains : [baseSepolia, base, bscTestnet, bsc];
+};
+
+const configuredChains = getConfiguredChains();
+
 // Create wagmi config with custom connectors and persistent storage OUTSIDE component
 const wagmiConfig = createConfig({
   connectors,
-  chains: [baseSepolia, base, bscTestnet, bsc],
+  chains: configuredChains as any,
   transports: {
     [baseSepolia.id]: http(),
     [base.id]: http(),
