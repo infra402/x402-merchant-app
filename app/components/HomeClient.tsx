@@ -2,22 +2,8 @@
 
 import Link from 'next/link';
 import Logo from '../assets/infra402.svg';
-import dynamic from 'next/dynamic';
-import { useState, useEffect } from 'react';
-
-// Dynamically import NetworkSelector to avoid SSR issues with wagmi hooks
-const NetworkSelector = dynamic(
-  () => import('./NetworkSelector').then((mod) => ({ default: mod.NetworkSelector })),
-  { ssr: false }
-);
 
 export function HomeClient() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0B0B10', color: '#E8ECF1' }}>
       <div className="flex-grow">
@@ -28,13 +14,6 @@ export function HomeClient() {
             <p className="text-4xl font-semibold mb-8 text-center" style={{ fontFamily: 'Geist Mono, monospace', color: '#E8ECF1' }}>
               x402 merchant app demo
             </p>
-
-            {/* Network Selector - above the payment button */}
-            {mounted && (
-              <div className="mb-6 w-full max-w-sm">
-                <NetworkSelector />
-              </div>
-            )}
 
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
