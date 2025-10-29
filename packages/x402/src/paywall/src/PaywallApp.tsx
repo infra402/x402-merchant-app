@@ -469,7 +469,9 @@ export function PaywallApp() {
       <div className="content w-full">
         {!paymentSuccess && (
           <>
-            <ConnectButton />
+            <div className="connect-wallet-container">
+              <ConnectButton />
+            </div>
 
             {/* Wrap/Unwrap Section - Only for BSC networks */}
             {showWrapUnwrap && isConnected && !paymentSuccess && (

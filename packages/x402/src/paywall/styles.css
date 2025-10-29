@@ -234,8 +234,13 @@ body {
 }
 
 /* RainbowKit component customization */
-/* Ensure RainbowKit buttons use full width and proper vertical spacing */
-.w-full > div[data-rk] {
+/* ConnectButton container - ensures proper spacing */
+.connect-wallet-container {
+  width: 100%;
+}
+
+/* Ensure RainbowKit buttons use full width */
+.connect-wallet-container > div[data-rk] {
   width: 100%;
 }
 
