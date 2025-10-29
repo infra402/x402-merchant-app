@@ -285,39 +285,11 @@ export function PaywallApp() {
   }, [switchChainAsync, paymentChain, isCorrectChain]);
 
   const handlePayment = useCallback(async () => {
-    if (!address || !x402) {
+    if (!address || !x402 || !paymentRequirements) {
       return;
     }
 
     await handleSwitchChain();
-
-    // Create fallback payment requirements if needed (for chainConfig networks)
-    let requirements = paymentRequirements;
-    if (!requirements) {
-      // Get the first payment requirement to extract payTo and other common fields
-      const firstRequirement = allRequirements[0];
-      if (!firstRequirement || !tokenAddress) {
-        setStatus("Cannot create payment: missing payment configuration");
-        return;
-      }
-
-      // Construct fallback payment requirements for this network
-      requirements = {
-        scheme: "exact" as const,
-        network: network,
-        maxAmountRequired: "10000", // Will be updated by ensureValidAmount
-        resource: x402.currentUrl,
-        description: `Payment for ${networkDisplayName}`,
-        mimeType: "text/html",
-        payTo: firstRequirement.payTo,
-        maxTimeoutSeconds: 3600,
-        asset: tokenAddress,
-        extra: {
-          decimals: tokenDecimals,
-          symbol: tokenSymbol,
-        },
-      };
-    }
 
     // Use wagmi's wallet client which has the correct provider for the connected wallet
     // This avoids MetaMask conflicts when multiple wallets are installed
@@ -349,7 +321,7 @@ export function PaywallApp() {
       }
 
       setStatus("Creating payment signature...");
-      const validPaymentRequirements = ensureValidAmount(requirements);
+      const validPaymentRequirements = ensureValidAmount(paymentRequirements);
       const initialPayment = await exact.evm.createPayment(
         walletClient,
         1,
@@ -404,7 +376,7 @@ export function PaywallApp() {
     } finally {
       setIsPaying(false);
     }
-  }, [address, x402, paymentRequirements, allRequirements, network, networkDisplayName, tokenDecimals, tokenSymbol, tokenAddress, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient]);
+  }, [address, x402, paymentRequirements, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient]);
 
   const handleWrap = useCallback(async () => {
     if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {

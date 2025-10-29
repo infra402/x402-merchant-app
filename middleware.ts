@@ -41,6 +41,21 @@ type NetworkRouteConfig = {
     title: string;
     message: string;
   };
+  networks?: {
+    price: string | {
+      amount: string;
+      asset: {
+        address: Address;
+        decimals: number;
+        eip712: {
+          name: string;
+          version: string;
+          symbol?: string;
+        };
+      };
+    };
+    network: Network;
+  }[];
 };
 
 const networkConfigs: NetworkRouteConfig[] = networks.map((networkEnv, index) => {
@@ -105,12 +120,17 @@ const networkConfigs: NetworkRouteConfig[] = networks.map((networkEnv, index) =>
   };
 });
 
-// Use first network configuration (for now, multi-network requires user to configure one primary network)
-// TODO: Future enhancement - support dynamic network switching based on connected wallet
+// Support all configured networks for the protected route
 const primaryNetworkConfig = networkConfigs[0];
 
+// Create route config with all networks
+const routeConfig: NetworkRouteConfig = {
+  ...primaryNetworkConfig,
+  networks: networkConfigs.map(cfg => ({ price: cfg.price, network: cfg.network })),
+};
+
 const routes: Record<string, NetworkRouteConfig> = {
-  "/protected": primaryNetworkConfig,
+  "/protected": routeConfig,
 };
 
 // Use first wallet address or empty string

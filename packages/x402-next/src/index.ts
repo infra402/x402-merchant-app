@@ -113,7 +113,7 @@ export function paymentMiddleware(
       return NextResponse.next();
     }
 
-    const { price, network, config = {} } = matchingRoute.config;
+    const { price, network, config = {}, networks } = matchingRoute.config;
     const {
       description,
       mimeType,
@@ -128,114 +128,120 @@ export function paymentMiddleware(
       message,
     } = config;
 
-    const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
-    if ("error" in atomicAmountForAsset) {
-      return new NextResponse(atomicAmountForAsset.error, { status: 500 });
-    }
-    const { maxAmountRequired, asset } = atomicAmountForAsset;
-
     const resourceUrl =
       resource || (`${request.nextUrl.protocol}//${request.nextUrl.host}${pathname}` as Resource);
 
     let paymentRequirements: PaymentRequirements[] = [];
 
+    // Get network configurations - either from networks array or single network config
+    const networkConfigs = networks || [{ price, network }];
+
     // TODO: create a shared middleware function to build payment requirements
-    // evm networks
-    if (SupportedEVMNetworks.includes(network)) {
-      paymentRequirements.push({
-        scheme: "exact",
-        network,
-        maxAmountRequired,
-        resource: resourceUrl,
-        description: description ?? "",
-        mimeType: mimeType ?? "application/json",
-        payTo: getAddress(payTo),
-        maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
-        asset: getAddress(asset.address),
-        // TODO: Rename outputSchema to requestStructure
-        outputSchema: {
-          input: {
-            type: "http",
-            method,
-            discoverable: discoverable ?? true,
-            ...inputSchema,
-          },
-          output: outputSchema,
-        },
-        extra: {
-          ...(asset as ERC20TokenAmount["asset"]).eip712,
-          decimals: asset.decimals,
-        },
-      });
-    }
-    // svm networks
-    else if (SupportedSVMNetworks.includes(network)) {
-      // network call to get the supported payments from the facilitator
-      const paymentKinds = await supported();
+    // Loop through all network configurations and create payment requirements for each
+    for (const netConfig of networkConfigs) {
+      const atomicAmountForAsset = processPriceToAtomicAmount(netConfig.price, netConfig.network);
+      if ("error" in atomicAmountForAsset) {
+        return new NextResponse(atomicAmountForAsset.error, { status: 500 });
+      }
+      const { maxAmountRequired, asset } = atomicAmountForAsset;
 
-      // find the payment kind that matches the network and scheme
-      let feePayer: string | undefined;
-      for (const kind of paymentKinds.kinds) {
-        if (kind.network === network && kind.scheme === "exact") {
-          feePayer = kind?.extra?.feePayer;
-          break;
+      // evm networks
+      if (SupportedEVMNetworks.includes(netConfig.network)) {
+        paymentRequirements.push({
+          scheme: "exact",
+          network: netConfig.network,
+          maxAmountRequired,
+          resource: resourceUrl,
+          description: description ?? "",
+          mimeType: mimeType ?? "application/json",
+          payTo: getAddress(payTo),
+          maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
+          asset: getAddress(asset.address),
+          // TODO: Rename outputSchema to requestStructure
+          outputSchema: {
+            input: {
+              type: "http",
+              method,
+              discoverable: discoverable ?? true,
+              ...inputSchema,
+            },
+            output: outputSchema,
+          },
+          extra: {
+            ...(asset as ERC20TokenAmount["asset"]).eip712,
+            decimals: asset.decimals,
+          },
+        });
+      }
+      // svm networks
+      else if (SupportedSVMNetworks.includes(netConfig.network)) {
+        // network call to get the supported payments from the facilitator
+        const paymentKinds = await supported();
+
+        // find the payment kind that matches the network and scheme
+        let feePayer: string | undefined;
+        for (const kind of paymentKinds.kinds) {
+          if (kind.network === netConfig.network && kind.scheme === "exact") {
+            feePayer = kind?.extra?.feePayer;
+            break;
+          }
         }
-      }
 
-      // svm networks require a fee payer
-      if (!feePayer) {
-        throw new Error(`The facilitator did not provide a fee payer for network: ${network}.`);
-      }
+        // svm networks require a fee payer
+        if (!feePayer) {
+          throw new Error(`The facilitator did not provide a fee payer for network: ${netConfig.network}.`);
+        }
 
-      // build the payment requirements for svm
-      paymentRequirements.push({
-        scheme: "exact",
-        network,
-        maxAmountRequired,
-        resource: resourceUrl,
-        description: description ?? "",
-        mimeType: mimeType ?? "",
-        payTo: payTo,
-        maxTimeoutSeconds: maxTimeoutSeconds ?? 60,
-        asset: asset.address,
-        // TODO: Rename outputSchema to requestStructure
-        outputSchema: {
-          input: {
-            type: "http",
-            method,
-            discoverable: discoverable ?? true,
-            ...inputSchema,
+        // build the payment requirements for svm
+        paymentRequirements.push({
+          scheme: "exact",
+          network: netConfig.network,
+          maxAmountRequired,
+          resource: resourceUrl,
+          description: description ?? "",
+          mimeType: mimeType ?? "",
+          payTo: payTo,
+          maxTimeoutSeconds: maxTimeoutSeconds ?? 60,
+          asset: asset.address,
+          // TODO: Rename outputSchema to requestStructure
+          outputSchema: {
+            input: {
+              type: "http",
+              method,
+              discoverable: discoverable ?? true,
+              ...inputSchema,
+            },
+            output: outputSchema,
           },
-          output: outputSchema,
-        },
-        extra: {
-          feePayer,
-        },
-      });
-    } else {
-      // Custom network support - treat as EVM by default
-      // This allows custom facilitators to handle unsupported networks
-      paymentRequirements.push({
-        scheme: "exact",
-        network,
-        maxAmountRequired,
-        resource: resourceUrl,
-        description: description ?? "",
-        mimeType: mimeType ?? "application/json",
-        payTo: getAddress(payTo),
-        maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
-        asset: getAddress(asset.address),
-        outputSchema: {
-          input: {
-            type: "http",
-            method,
-            discoverable: discoverable ?? true,
-            ...inputSchema,
+          extra: {
+            feePayer,
           },
-          output: outputSchema,
-        },
-        extra: (asset as ERC20TokenAmount["asset"]).eip712,
-      });
+        });
+      } else {
+        // Custom network support - treat as EVM by default
+        // This allows custom facilitators to handle unsupported networks
+        paymentRequirements.push({
+          scheme: "exact",
+          network: netConfig.network,
+          maxAmountRequired,
+          resource: resourceUrl,
+          description: description ?? "",
+          mimeType: mimeType ?? "application/json",
+          payTo: getAddress(payTo),
+          maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
+          asset: getAddress(asset.address),
+          outputSchema: {
+            input: {
+              type: "http",
+              method,
+              discoverable: discoverable ?? true,
+              ...inputSchema,
+            },
+            output: outputSchema,
+          },
+          extra: (asset as ERC20TokenAmount["asset"]).eip712,
+        });
+      }
     }
 
     // Check for payment header

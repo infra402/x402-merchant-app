@@ -61,10 +61,17 @@ export interface SPLTokenAmount {
 
 export type Price = Money | ERC20TokenAmount | SPLTokenAmount;
 
+export interface NetworkConfig {
+  price: Price;
+  network: Network;
+}
+
 export interface RouteConfig {
   price: Price;
   network: Network;
   config?: PaymentMiddlewareConfig;
+  // Support multiple networks for the same route
+  networks?: NetworkConfig[];
 }
 
 export type RoutesConfig = Record<string, Price | RouteConfig>;
