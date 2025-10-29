@@ -681,7 +681,7 @@ export function PaywallApp() {
                       </div>
                       {showWrapUnwrap && (
                         <div style={{ marginTop: '0.5rem' }}>
-                          You can use the "Wrap" function below to wrap native BNB to {tokenSymbol}.
+                          You can use the "Wrap" function above to wrap native BNB to {tokenSymbol}.
                         </div>
                       )}
                     </div>
