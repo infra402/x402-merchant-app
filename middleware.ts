@@ -11,15 +11,15 @@ const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL as Resource;
 const paywallTitle = process.env.PAYWALL_TITLE || "";
 const paywallMessage = process.env.PAYWALL_MESSAGE || "";
 
-// Parse multi-chain configuration
+// Parse multi-chain configuration (all comma-separated)
 const networks = (process.env.NETWORKS || "base-sepolia").split(',').map(n => n.trim());
-const walletAddresses = (process.env.RESOURCE_WALLET_ADDRESSES || "").split(':').map(a => a.trim());
-const amounts = (process.env.PAYWALL_AMOUNTS || "0.01").split(':').map(a => a.trim());
-const tokenAddresses = (process.env.PAYMENT_TOKEN_ADDRESSES || "").split(':').map(a => a.trim());
-const tokenNames = (process.env.PAYMENT_TOKEN_NAMES || "").split(':').map(n => n.trim());
-const tokenSymbols = (process.env.PAYMENT_TOKEN_SYMBOLS || "").split(':').map(s => s.trim());
-const tokenVersions = (process.env.PAYMENT_TOKEN_VERSIONS || "").split(':').map(v => v.trim());
-const tokenDecimals = (process.env.PAYMENT_TOKEN_DECIMALS || "").split(':').map(d => d.trim());
+const walletAddresses = (process.env.RESOURCE_WALLET_ADDRESSES || "").split(',').map(a => a.trim());
+const amounts = (process.env.PAYWALL_AMOUNTS || "0.01").split(',').map(a => a.trim());
+const tokenAddresses = (process.env.PAYMENT_TOKEN_ADDRESSES || "").split(',').map(a => a.trim());
+const tokenNames = (process.env.PAYMENT_TOKEN_NAMES || "").split(',').map(n => n.trim());
+const tokenSymbols = (process.env.PAYMENT_TOKEN_SYMBOLS || "").split(',').map(s => s.trim());
+const tokenVersions = (process.env.PAYMENT_TOKEN_VERSIONS || "").split(',').map(v => v.trim());
+const tokenDecimals = (process.env.PAYMENT_TOKEN_DECIMALS || "").split(',').map(d => d.trim());
 
 // Create configuration for each network
 type NetworkRouteConfig = {
