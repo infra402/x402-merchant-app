@@ -676,7 +676,14 @@ export function PaywallApp() {
                       color: '#EF4444',
                       fontFamily: 'Geist Sans, sans-serif'
                     }}>
-                      Insufficient balance. You need {amount} {tokenSymbol} but only have {formattedUsdcBalance} {tokenSymbol}.
+                      <div>
+                        Insufficient balance. You need {amount} {tokenSymbol} but only have {formattedUsdcBalance} {tokenSymbol}.
+                      </div>
+                      {showWrapUnwrap && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          You can use the "Wrap" function below to wrap native BNB to {tokenSymbol}.
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
