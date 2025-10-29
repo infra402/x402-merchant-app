@@ -13,13 +13,12 @@ const networkIconsFromChains: Record<string, string | undefined> = {
   'bsc-testnet': bscTestnet.iconUrl,
 };
 
-// Fallback to inline SVG data URIs with proper backgrounds and logos
+// Use RainbowKit's official CDN icons (same as what appears in CustomConnectButton)
 const networkIcons: Record<string, string> = {
-  // Base logo: Blue circle with white rounded square containing blue triangle
-  'base': networkIconsFromChains['base'] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTExIiBoZWlnaHQ9IjExMSIgdmlld0JveD0iMCAwIDExMSAxMTEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTUuNSIgY3k9IjU1LjUiIHI9IjU1LjUiIGZpbGw9IiMwMDUyRkYiLz48cGF0aCBkPSJNNTUuNSAzOC44ODg5TDcyLjExMTEgNTUuNUg3Mi4xMTExVjcyLjExMTFINTUuNVYzOC44ODg5WiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
-  'base-sepolia': networkIconsFromChains['base-sepolia'] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTExIiBoZWlnaHQ9IjExMSIgdmlld0JveD0iMCAwIDExMSAxMTEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTUuNSIgY3k9IjU1LjUiIHI9IjU1LjUiIGZpbGw9IiMwMDUyRkYiLz48cGF0aCBkPSJNNTUuNSAzOC44ODg5TDcyLjExMTEgNTUuNUg3Mi4xMTExVjcyLjExMTFINTUuNVYzOC44ODg5WiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
-  'bsc': networkIconsFromChains['bsc'] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI2IiBoZWlnaHQ9IjEyNiIgdmlld0JveD0iMCAwIDEyNiAxMjYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjMiIGN5PSI2MyIgcj0iNjMiIGZpbGw9IiNGMEI5MEIiLz48cGF0aCBkPSJNNDYuNyA0OS4yTDYzIDMyLjlMNzkuMyA0OS4yTDg5LjYgMzguOUw2MyAxMi4zTDM2LjQgMzguOUw0Ni43IDQ5LjJaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik0yMS43IDYzTDMyIDUyLjdMNDIuMyA2M0wzMiA3My4zTDIxLjcgNjNaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik00Ni43IDc2LjhMNjMgOTMuMUw3OS4zIDc2LjhMODkuNiA4Ny4xTDYzIDExMy43TDM2LjQgODcuMUw0Ni43IDc2LjhaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik04My43IDYzTDk0IDUyLjdMMTA0LjMgNjNMOTQgNzMuM0w4My43IDYzWiIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNzIuOCA2M0w2MyA1My4yTDUzLjIgNjNMNjMgNzIuOEw3Mi44IDYzWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
-  'bsc-testnet': networkIconsFromChains['bsc-testnet'] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI2IiBoZWlnaHQ9IjEyNiIgdmlld0JveD0iMCAwIDEyNiAxMjYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjMiIGN5PSI2MyIgcj0iNjMiIGZpbGw9IiNGMEI5MEIiLz48cGF0aCBkPSJNNDYuNyA0OS4yTDYzIDMyLjlMNzkuMyA0OS4yTDg5LjYgMzguOUw2MyAxMi4zTDM2LjQgMzguOUw0Ni43IDQ5LjJaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik0yMS43IDYzTDMyIDUyLjdMNDIuMyA2M0wzMiA3My4zTDIxLjcgNjNaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik00Ni43IDc2LjhMNjMgOTMuMUw3OS4zIDc2LjhMODkuNiA4Ny4xTDYzIDExMy43TDM2LjQgODcuMUw0Ni43IDc2LjhaIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik04My43IDYzTDk0IDUyLjdMMTA0LjMgNjNMOTQgNzMuM0w4My43IDYzWiIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNzIuOCA2M0w2MyA1My4yTDUzLjIgNjNMNjMgNzIuOEw3Mi44IDYzWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
+  'base': networkIconsFromChains['base'] || 'https://avatars.githubusercontent.com/u/108554348?s=200&v=4',
+  'base-sepolia': networkIconsFromChains['base-sepolia'] || 'https://avatars.githubusercontent.com/u/108554348?s=200&v=4',
+  'bsc': networkIconsFromChains['bsc'] || 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+  'bsc-testnet': networkIconsFromChains['bsc-testnet'] || 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
 };
 
 const networkNames: Record<string, string> = {
