@@ -469,7 +469,7 @@ export function PaywallApp() {
       <div className="content w-full">
         {!paymentSuccess && (
           <>
-            <div className="connect-wallet-container">
+            <div style={{ marginTop: '1.5rem' }}>
               <ConnectButton />
             </div>
 
