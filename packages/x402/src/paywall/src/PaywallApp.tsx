@@ -171,9 +171,13 @@ export function PaywallApp() {
     }
 
     // Fallback to chainConfig for default USDC address
+    // IMPORTANT: chainConfig uses chain IDs as keys (e.g., "8453"), not network names (e.g., "base")!
     const chainConfig = x402?.config?.chainConfig;
-    if (chainConfig && chainConfig[network]) {
-      return chainConfig[network].usdcAddress as Address;
+    if (chainConfig && connectedChainId) {
+      const chainIdKey = connectedChainId.toString();
+      if (chainConfig[chainIdKey]) {
+        return chainConfig[chainIdKey].usdcAddress as Address;
+      }
     }
 
     return undefined;
