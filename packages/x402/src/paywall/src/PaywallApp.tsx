@@ -1,13 +1,6 @@
 "use client";
 
-import { FundButton, getOnrampBuyUrl } from "@coinbase/onchainkit/fund";
-import { Avatar, Name } from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Address, Chain, createPublicClient, formatUnits, http, publicActions } from "viem";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
@@ -19,7 +12,6 @@ import { getUSDCBalance } from "../../shared/evm";
 import { usdcABI } from "../../types/shared/evm/erc20PermitABI";
 
 import { Spinner } from "./Spinner";
-import { useOnrampSessionToken } from "./useOnrampSessionToken";
 import { ensureValidAmount } from "./utils";
 
 // XBNB/Wrapped Native Token ABI - only the functions we need
@@ -55,7 +47,6 @@ export function PaywallApp() {
   const { address, isConnected, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: wagmiWalletClient } = useWalletClient();
-  const { sessionToken } = useOnrampSessionToken(address);
 
   const [status, setStatus] = useState<string>("");
   const [isCorrectChain, setIsCorrectChain] = useState<boolean | null>(null);
@@ -94,7 +85,6 @@ export function PaywallApp() {
   };
 
   const paymentChain = getChainFromNetwork(network);
-  const showOnramp = Boolean(!testnet && isConnected && x402.sessionTokenEndpoint);
 
   // Get network and token information from payment requirements
   const paymentRequirements = x402
@@ -230,17 +220,6 @@ export function PaywallApp() {
       setStatus("");
     }
   }, [paymentChain.id, connectedChainId, isConnected]);
-
-  const onrampBuyUrl = useMemo(() => {
-    if (!sessionToken) {
-      return;
-    }
-    return getOnrampBuyUrl({
-      presetFiatAmount: 2,
-      fiatCurrency: "USD",
-      sessionToken,
-    });
-  }, [sessionToken]);
 
   const handleSuccessfulResponse = useCallback(async (response: Response) => {
     setPaymentSuccess(true);
@@ -490,15 +469,7 @@ export function PaywallApp() {
       <div className="content w-full">
         {!paymentSuccess && (
           <>
-            <Wallet className="w-full">
-              <ConnectWallet className="button button-primary w-full" disconnectedLabel="Connect wallet">
-                <Avatar className="h-5 w-5 opacity-80" />
-                <Name className="opacity-80 text-sm" />
-              </ConnectWallet>
-              <WalletDropdown>
-                <WalletDropdownDisconnect className="opacity-80" />
-              </WalletDropdown>
-            </Wallet>
+            <ConnectButton />
 
             {/* Wrap/Unwrap Section - Only for BSC networks */}
             {showWrapUnwrap && isConnected && !paymentSuccess && (
@@ -617,23 +588,13 @@ export function PaywallApp() {
             </div>
 
             {isCorrectChain ? (
-              <div className="cta-container">
-                {showOnramp && (
-                  <FundButton
-                    fundingUrl={onrampBuyUrl}
-                    text="Get more USDC"
-                    hideIcon
-                    className="button button-positive"
-                  />
-                )}
-                <button
-                  className="button button-primary"
-                  onClick={handlePayment}
-                  disabled={isPaying}
-                >
-                  {isPaying ? <Spinner /> : "Pay now"}
-                </button>
-              </div>
+              <button
+                className="button button-primary"
+                onClick={handlePayment}
+                disabled={isPaying}
+              >
+                {isPaying ? <Spinner /> : "Pay now"}
+              </button>
             ) : (
               <button className="button button-primary" onClick={handleSwitchChain}>
                 Switch to {networkDisplayName}

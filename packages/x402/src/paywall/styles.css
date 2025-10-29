@@ -1,4 +1,3 @@
-@import "@coinbase/onchainkit/styles.css";
 /* Reset */
 *,
 *::before,
@@ -234,9 +233,8 @@ body {
   color: var(--text-color);
 }
 
-/* OnchainKit wallet component overrides */
-/* Force dark text color on connected wallet button to match other primary buttons */
-.button-primary .ock-text-foreground,
-.button-primary .ock-text-foreground-muted {
-  color: #0B0B10 !important;
+/* RainbowKit component customization */
+/* Ensure RainbowKit buttons use full width */
+.w-full > div[data-rk] {
+  width: 100%;
 }
