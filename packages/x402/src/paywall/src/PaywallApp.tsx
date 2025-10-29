@@ -192,12 +192,10 @@ export function PaywallApp() {
 
   const checkUSDCBalance = useCallback(async () => {
     if (!address || !tokenAddress) {
-      console.log("checkUSDCBalance: no address or tokenAddress", { address, tokenAddress });
       return;
     }
 
     try {
-      console.log("checkUSDCBalance: fetching for address", address, "token", tokenAddress);
       // Get token balance using the correct token address from payment requirements
       const balance = await publicClient.readContract({
         address: tokenAddress,
@@ -205,7 +203,6 @@ export function PaywallApp() {
         functionName: "balanceOf",
         args: [address],
       });
-      console.log("checkUSDCBalance: raw balance", balance);
 
       // Get decimals from the contract
       const decimals = await publicClient.readContract({
@@ -213,10 +210,8 @@ export function PaywallApp() {
         abi: usdcABI,
         functionName: "decimals",
       });
-      console.log("checkUSDCBalance: decimals", decimals);
 
       const formattedBalance = formatUnits(balance as bigint, decimals as number);
-      console.log("checkUSDCBalance: formatted balance", formattedBalance);
       setFormattedUsdcBalance(formattedBalance);
     } catch (error) {
       console.error("Error fetching token balance:", error);
@@ -226,16 +221,12 @@ export function PaywallApp() {
 
   const checkNativeBalance = useCallback(async () => {
     if (!address) {
-      console.log("checkNativeBalance: no address");
       return;
     }
 
     try {
-      console.log("checkNativeBalance: fetching for address", address);
       const balance = await publicClient.getBalance({ address });
-      console.log("checkNativeBalance: raw balance", balance);
       const formattedBalance = formatUnits(balance, 18);
-      console.log("checkNativeBalance: formatted balance", formattedBalance);
       setNativeBalance(formattedBalance);
     } catch (error) {
       console.error("Error fetching native balance:", error);
@@ -244,9 +235,7 @@ export function PaywallApp() {
   }, [address, publicClient]);
 
   useEffect(() => {
-    console.log("useEffect for balance check triggered, address:", address);
     if (address) {
-      console.log("Calling checkUSDCBalance and checkNativeBalance");
       checkUSDCBalance();
       checkNativeBalance();
     }
@@ -321,7 +310,7 @@ export function PaywallApp() {
       }
 
       setStatus("Creating payment signature...");
-      const validPaymentRequirements = ensureValidAmount(paymentRequirements);
+      const validPaymentRequirements = ensureValidAmount(paymentRequirements, amount);
       const initialPayment = await exact.evm.createPayment(
         walletClient,
         1,
@@ -376,7 +365,7 @@ export function PaywallApp() {
     } finally {
       setIsPaying(false);
     }
-  }, [address, x402, paymentRequirements, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient]);
+  }, [address, x402, paymentRequirements, amount, network, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient]);
 
   const handleWrap = useCallback(async () => {
     if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
@@ -491,7 +480,7 @@ export function PaywallApp() {
         {paymentSuccess ? (
           <div className="success-message">
             <p className="font-semibold" style={{ color: '#22C55E' }}>✓ Payment confirmed!</p>
-            <p style={{ color: '#E8ECF1' }}>Your payment has been processed successfully. You now have access to the protected content.</p>
+            <p style={{ color: '#E8ECF1', marginTop: '0.75rem' }}>Your payment has been processed successfully. You now have access to the protected content.</p>
           </div>
         ) : (
           <>
@@ -594,11 +583,17 @@ export function PaywallApp() {
                     <button
                       className="button button-primary w-full"
                       onClick={isWrapMode ? handleWrap : handleUnwrap}
-                      disabled={isWrapping || !isWrapUnwrapValid}
+                      disabled={isWrapping}
                       style={{
                         minHeight: '48px',
-                        ...((isWrapping || !isWrapUnwrapValid) ? {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        ...(isWrapping ? {
                           backgroundColor: '#9AA4B2',
+                          opacity: 0.5,
+                          cursor: 'not-allowed'
+                        } : !isWrapUnwrapValid ? {
                           opacity: 0.5,
                           cursor: 'not-allowed'
                         } : {})
@@ -685,10 +680,20 @@ export function PaywallApp() {
                   <button
                     className="button button-primary"
                     onClick={handlePayment}
-                    disabled={isPaying || hasInsufficientBalance}
+                    disabled={isPaying}
                     style={{
                       minHeight: '48px',
-                      ...(hasInsufficientBalance ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ...(isPaying ? {
+                        backgroundColor: '#9AA4B2',
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
+                      } : hasInsufficientBalance ? {
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
+                      } : {})
                     }}
                   >
                     {isPaying ? <Spinner /> : "Pay now"}
