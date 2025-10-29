@@ -110,10 +110,10 @@ export function PaywallApp() {
   const paymentChain = getChainFromNetwork(network);
 
   // Get network and token information from payment requirements
-  // If payment requirements don't exist for current network, use default USDC config
-  const paymentRequirements = x402
-    ? selectPaymentRequirements([x402.paymentRequirements].flat(), network, "exact")
-    : null;
+  // IMPORTANT: Don't use selectPaymentRequirements because it returns the first requirement
+  // if no match is found. We need null when there's no match so we can fall back to chainConfig.
+  const allRequirements = x402 ? [x402.paymentRequirements].flat() : [];
+  const paymentRequirements = allRequirements.find(req => req.network === network) || null;
 
   // Helper function to get human-readable network name
   const getNetworkDisplayName = (networkId: string): string => {
