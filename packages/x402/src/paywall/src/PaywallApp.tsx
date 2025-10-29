@@ -652,19 +652,40 @@ export function PaywallApp() {
               </div>
             </div>
 
-            {isCorrectChain ? (
-              <button
-                className="button button-primary"
-                onClick={handlePayment}
-                disabled={isPaying}
-              >
-                {isPaying ? <Spinner /> : "Pay now"}
-              </button>
-            ) : (
-              <button className="button button-primary" onClick={handleSwitchChain}>
-                Switch to {networkDisplayName}
-              </button>
-            )}
+            {/* Check if balance is sufficient */}
+            {(() => {
+              const hasInsufficientBalance = !hideBalance &&
+                formattedUsdcBalance &&
+                parseFloat(formattedUsdcBalance) < amount;
+
+              return isCorrectChain ? (
+                <>
+                  <button
+                    className="button button-primary"
+                    onClick={handlePayment}
+                    disabled={isPaying || hasInsufficientBalance}
+                    style={hasInsufficientBalance ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                  >
+                    {isPaying ? <Spinner /> : "Pay now"}
+                  </button>
+                  {hasInsufficientBalance && (
+                    <div style={{
+                      marginTop: '0.75rem',
+                      fontSize: '0.875rem',
+                      textAlign: 'center',
+                      color: '#EF4444',
+                      fontFamily: 'Geist Sans, sans-serif'
+                    }}>
+                      Insufficient balance. You need {amount} {tokenSymbol} but only have {formattedUsdcBalance} {tokenSymbol}.
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button className="button button-primary" onClick={handleSwitchChain}>
+                  Switch to {networkDisplayName}
+                </button>
+              );
+            })()}
           </div>
         )}
           </>
