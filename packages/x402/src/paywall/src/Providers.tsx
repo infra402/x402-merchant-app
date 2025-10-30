@@ -125,7 +125,7 @@ export function Providers({ children }: ProvidersProps) {
             borderRadius: 'medium',
             fontStack: 'system',
           })}
-          initialChain={baseSepolia}
+          initialChain={configuredChains[0]}
         >
           {children}
         </RainbowKitProvider>
