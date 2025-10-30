@@ -246,6 +246,7 @@ export function paymentMiddleware(
 
     // Check for payment header
     const paymentHeader = request.headers.get("X-PAYMENT");
+
     if (!paymentHeader) {
       const accept = request.headers.get("Accept");
       if (accept?.includes("text/html")) {
@@ -310,7 +311,7 @@ export function paymentMiddleware(
         JSON.stringify({
           x402Version,
           error:
-            errorMessages?.invalidPayment || (error instanceof Error ? error : "Invalid payment"),
+            errorMessages?.invalidPayment || (error instanceof Error ? error.message : "Invalid payment"),
           accepts: paymentRequirements,
         }),
         { status: 402, headers: { "Content-Type": "application/json" } },
@@ -321,6 +322,7 @@ export function paymentMiddleware(
       paymentRequirements,
       decodedPayment,
     );
+
     if (!selectedPaymentRequirements) {
       return new NextResponse(
         JSON.stringify({
@@ -373,12 +375,11 @@ export function paymentMiddleware(
         );
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Settlement failed";
       return new NextResponse(
         JSON.stringify({
           x402Version,
-          error:
-            errorMessages?.settlementFailed ||
-            (error instanceof Error ? error : "Settlement failed"),
+          error: `Settlement failed: ${errorMessage}`,
           accepts: paymentRequirements,
         }),
         { status: 402, headers: { "Content-Type": "application/json" } },

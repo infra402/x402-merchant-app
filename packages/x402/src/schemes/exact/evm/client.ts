@@ -19,12 +19,10 @@ export function preparePaymentHeader(
 ): UnsignedPaymentPayload {
   const nonce = createNonce();
 
-  const validAfter = BigInt(
-    Math.floor(Date.now() / 1000) - 600, // 10 minutes before
-  ).toString();
-  const validBefore = BigInt(
-    Math.floor(Date.now() / 1000 + paymentRequirements.maxTimeoutSeconds),
-  ).toString();
+  const now = Date.now();
+  const nowSeconds = Math.floor(now / 1000);
+  const validAfter = BigInt(nowSeconds - 600).toString();
+  const validBefore = BigInt(nowSeconds + paymentRequirements.maxTimeoutSeconds).toString();
 
   return {
     x402Version,

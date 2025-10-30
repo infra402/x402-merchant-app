@@ -54,6 +54,7 @@ export function PaywallApp() {
   const [formattedUsdcBalance, setFormattedUsdcBalance] = useState<string>("");
   const [hideBalance, setHideBalance] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState<string>("");
 
   // Wrap/Unwrap state
   const [isWrapMode, setIsWrapMode] = useState(true);
@@ -278,6 +279,11 @@ export function PaywallApp() {
       return;
     }
 
+    // Guard against concurrent calls
+    if (isPaying) {
+      return;
+    }
+
     await handleSwitchChain();
 
     // Use wagmi's wallet client which has the correct provider for the connected wallet
@@ -289,6 +295,7 @@ export function PaywallApp() {
     const walletClient = wagmiWalletClient.extend(publicActions);
 
     setIsPaying(true);
+    setPaymentError(""); // Clear any previous errors
 
     try {
       setStatus(`Checking ${tokenSymbol} balance...`);
@@ -313,6 +320,7 @@ export function PaywallApp() {
       const validPaymentRequirements = ensureValidAmount(paymentRequirements, amount);
       // Use x402Version from server's initial 402 response instead of hardcoded 1
       const serverVersion = x402.x402Version || 1;
+
       const initialPayment = await exact.evm.createPayment(
         walletClient,
         serverVersion,
@@ -332,38 +340,52 @@ export function PaywallApp() {
       if (response.ok) {
         await handleSuccessfulResponse(response);
       } else if (response.status === 402) {
-        // Try to parse error data, fallback to empty object if parsing fails
         const errorData = await response.json().catch(() => ({}));
-        if (errorData && typeof errorData.x402Version === "number") {
-          // Retry with server's x402Version
-          const retryPayment = await exact.evm.createPayment(
-            walletClient,
-            errorData.x402Version,
-            validPaymentRequirements,
-          );
 
-          retryPayment.x402Version = errorData.x402Version;
-          const retryHeader = exact.evm.encodePayment(retryPayment);
-          const retryResponse = await fetch(x402.currentUrl, {
-            headers: {
-              "X-PAYMENT": retryHeader,
-              "Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
-            },
-          });
-          if (retryResponse.ok) {
-            await handleSuccessfulResponse(retryResponse);
-            return;
-          } else {
-            throw new Error(`Payment retry failed: ${retryResponse.statusText}`);
+        // Extract meaningful error message
+        let errorMessage = "Payment was rejected by the server.";
+        let hasSpecificError = false;
+
+        if (errorData.error) {
+          if (typeof errorData.error === 'string' && errorData.error.length > 0) {
+            errorMessage = errorData.error;
+            hasSpecificError = true;
+          } else if (errorData.error.message) {
+            errorMessage = errorData.error.message;
+            hasSpecificError = true;
+          } else if (typeof errorData.error === 'object') {
+            // Check if object has any keys (not empty)
+            const errorKeys = Object.keys(errorData.error);
+            if (errorKeys.length > 0) {
+              errorMessage = JSON.stringify(errorData.error);
+              hasSpecificError = true;
+            }
           }
-        } else {
-          throw new Error(`Payment failed: ${response.statusText}`);
         }
+
+        // Check if this is a payment requirements issue
+        if (errorData.accepts && Array.isArray(errorData.accepts)) {
+          // Find the requirement for our network
+          const ourNetworkReq = errorData.accepts.find((req: any) => req.network === network);
+          if (ourNetworkReq && ourNetworkReq.maxAmountRequired === '0') {
+            errorMessage = `Server configuration error: Payment amount is set to 0 for ${networkDisplayName}. Please contact support.`;
+            hasSpecificError = true;
+          }
+        }
+
+        // If no specific error, provide more helpful message
+        if (!hasSpecificError) {
+          errorMessage = `Payment rejected (402). The server did not provide a specific error reason. Please check your wallet balance and try again.`;
+        }
+        throw new Error(errorMessage);
       } else {
-        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => "Unable to read error");
+        throw new Error(`Request failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Payment failed");
+      const errorMessage = error instanceof Error ? error.message : "Payment failed";
+      setStatus(errorMessage);
+      setPaymentError(errorMessage);
     } finally {
       setIsPaying(false);
     }
@@ -751,6 +773,21 @@ export function PaywallApp() {
                           You can use the "Wrap" function above to wrap native BNB to {tokenSymbol}.
                         </div>
                       )}
+                    </div>
+                  )}
+                  {paymentError && (
+                    <div style={{
+                      marginTop: '0.75rem',
+                      fontSize: '0.875rem',
+                      textAlign: 'center',
+                      color: '#EF4444',
+                      fontFamily: 'Geist Sans, sans-serif',
+                      maxWidth: '100%',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                      whiteSpace: 'normal'
+                    }}>
+                      <div>{paymentError}</div>
                     </div>
                   )}
                 </>

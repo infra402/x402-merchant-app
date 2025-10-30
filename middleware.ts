@@ -88,8 +88,9 @@ const networkConfigs: NetworkRouteConfig[] = networks.map((networkEnv, index) =>
 
     // Use custom token if fully configured
     if (customTokenAddress && customTokenName && customTokenVersion && customTokenDecimals) {
+      // Parse amount and convert to atomic units
       const amountFloat = parseFloat(amount);
-      const amountBigInt = ((BigInt(Math.floor(amountFloat * 100)) * BigInt(10) ** BigInt(customTokenDecimals)) / BigInt(100)).toString();
+      const amountBigInt = BigInt(Math.round(amountFloat * 10 ** customTokenDecimals)).toString();
 
       return {
         amount: amountBigInt,
@@ -109,8 +110,10 @@ const networkConfigs: NetworkRouteConfig[] = networks.map((networkEnv, index) =>
     return `$${amount}`;
   };
 
+  const price = getPaymentPrice();
+
   return {
-    price: getPaymentPrice(),
+    price,
     network,
     config: {
       description: "Access to protected content",
