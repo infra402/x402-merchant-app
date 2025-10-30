@@ -273,6 +273,7 @@ export function paymentMiddleware(
               >[0]["paymentRequirements"],
               currentUrl: request.url,
               testnet: network === "base-sepolia",
+              x402Version,
               cdpClientKey: paywall?.cdpClientKey,
               appLogo: paywall?.appLogo,
               appName: paywall?.appName,

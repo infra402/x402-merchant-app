@@ -7,6 +7,7 @@ interface PaywallOptions {
   paymentRequirements: PaymentRequirements[];
   currentUrl: string;
   testnet: boolean;
+  x402Version: number;
   cdpClientKey?: string;
   appName?: string;
   appLogo?: string;
@@ -52,6 +53,7 @@ export function getPaywallHtml({
   testnet,
   paymentRequirements,
   currentUrl,
+  x402Version,
   cdpClientKey,
   appName,
   appLogo,
@@ -73,6 +75,7 @@ export function getPaywallHtml({
       paymentRequirements: ${JSON.stringify(paymentRequirements)},
       testnet: ${testnet},
       currentUrl: "${escapeString(currentUrl)}",
+      x402Version: ${x402Version},
       config: {
         chainConfig: ${JSON.stringify(config)},
       },

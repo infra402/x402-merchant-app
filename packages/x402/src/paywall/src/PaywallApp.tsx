@@ -311,9 +311,11 @@ export function PaywallApp() {
 
       setStatus("Creating payment signature...");
       const validPaymentRequirements = ensureValidAmount(paymentRequirements, amount);
+      // Use x402Version from server's initial 402 response instead of hardcoded 1
+      const serverVersion = x402.x402Version || 1;
       const initialPayment = await exact.evm.createPayment(
         walletClient,
-        1,
+        serverVersion,
         validPaymentRequirements,
       );
 
@@ -365,7 +367,7 @@ export function PaywallApp() {
     } finally {
       setIsPaying(false);
     }
-  }, [address, x402, paymentRequirements, amount, network, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient]);
+  }, [address, x402, paymentRequirements, amount, network, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient, tokenAddress]);
 
   const handleWrap = useCallback(async () => {
     if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
