@@ -620,33 +620,27 @@ export function PaywallApp() {
                   </div>
 
                   {/* Action button */}
-                  {isCorrectChain ? (
-                    <button
-                      className="button button-primary w-full"
-                      onClick={isWrapMode ? handleWrap : handleUnwrap}
-                      disabled={isWrapping}
-                      style={{
-                        minHeight: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        ...(isWrapping ? {
-                          backgroundColor: '#9AA4B2',
-                          opacity: 0.5,
-                          cursor: 'not-allowed'
-                        } : !isWrapUnwrapValid ? {
-                          opacity: 0.5,
-                          cursor: 'not-allowed'
-                        } : {})
-                      }}
-                    >
-                      {isWrapping ? <Spinner /> : isWrapMode ? 'Wrap' : 'Unwrap'}
-                    </button>
-                  ) : (
-                    <button className="button button-primary w-full" onClick={handleSwitchChain}>
-                      Switch to {networkDisplayName}
-                    </button>
-                  )}
+                  <button
+                    className="button button-primary w-full"
+                    onClick={isCorrectChain ? (isWrapMode ? handleWrap : handleUnwrap) : handleSwitchChain}
+                    disabled={isCorrectChain && (isWrapping || !isWrapUnwrapValid)}
+                    style={{
+                      minHeight: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ...(isCorrectChain && isWrapping ? {
+                        backgroundColor: '#9AA4B2',
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
+                      } : isCorrectChain && !isWrapUnwrapValid ? {
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
+                      } : {})
+                    }}
+                  >
+                    {isCorrectChain ? (isWrapping ? <Spinner /> : isWrapMode ? 'Wrap' : 'Unwrap') : `Switch to ${networkDisplayName}`}
+                  </button>
 
                   {/* Status message */}
                   {wrapStatus && (
@@ -716,30 +710,30 @@ export function PaywallApp() {
                 formattedUsdcBalance &&
                 parseFloat(formattedUsdcBalance) < amount;
 
-              return isCorrectChain ? (
+              return (
                 <>
                   <button
                     className="button button-primary"
-                    onClick={handlePayment}
-                    disabled={isPaying}
+                    onClick={isCorrectChain ? handlePayment : handleSwitchChain}
+                    disabled={isCorrectChain && (isPaying || hasInsufficientBalance)}
                     style={{
                       minHeight: '48px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      ...(isPaying ? {
+                      ...(isCorrectChain && isPaying ? {
                         backgroundColor: '#9AA4B2',
                         opacity: 0.5,
                         cursor: 'not-allowed'
-                      } : hasInsufficientBalance ? {
+                      } : isCorrectChain && hasInsufficientBalance ? {
                         opacity: 0.5,
                         cursor: 'not-allowed'
                       } : {})
                     }}
                   >
-                    {isPaying ? <Spinner /> : "Pay now"}
+                    {isCorrectChain ? (isPaying ? <Spinner /> : "Pay now") : `Switch to ${networkDisplayName}`}
                   </button>
-                  {hasInsufficientBalance && (
+                  {isCorrectChain && hasInsufficientBalance && (
                     <div style={{
                       marginTop: '0.75rem',
                       fontSize: '0.875rem',
@@ -758,10 +752,6 @@ export function PaywallApp() {
                     </div>
                   )}
                 </>
-              ) : (
-                <button className="button button-primary" onClick={handleSwitchChain}>
-                  Switch to {networkDisplayName}
-                </button>
               );
             })()}
           </div>
