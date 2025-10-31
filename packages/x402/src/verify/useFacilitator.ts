@@ -47,22 +47,29 @@ export function useFacilitator(facilitator?: FacilitatorConfig) {
       headers = { ...headers, ...authHeaders.verify };
     }
 
-    const res = await fetch(`${url}/verify`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        x402Version: payload.x402Version,
-        paymentPayload: toJsonSafe(payload),
-        paymentRequirements: toJsonSafe(paymentRequirements),
-      }),
-    });
+    try {
+      const res = await fetch(`${url}/verify`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          x402Version: payload.x402Version,
+          paymentPayload: toJsonSafe(payload),
+          paymentRequirements: toJsonSafe(paymentRequirements),
+        }),
+      });
 
-    if (res.status !== 200) {
-      throw new Error(`Failed to verify payment: ${res.statusText}`);
+      if (res.status !== 200) {
+        throw new Error(`Failed to verify payment: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      return data as VerifyResponse;
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'fetch failed') {
+        throw new Error(`Unable to connect to facilitator at ${url}. Please check your network connection or facilitator URL.`);
+      }
+      throw error;
     }
-
-    const data = await res.json();
-    return data as VerifyResponse;
   }
 
   /**
@@ -84,23 +91,56 @@ export function useFacilitator(facilitator?: FacilitatorConfig) {
       headers = { ...headers, ...authHeaders.settle };
     }
 
-    const res = await fetch(`${url}/settle`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        x402Version: payload.x402Version,
-        paymentPayload: toJsonSafe(payload),
-        paymentRequirements: toJsonSafe(paymentRequirements),
-      }),
-    });
+    const requestBody = {
+      x402Version: payload.x402Version,
+      paymentPayload: toJsonSafe(payload),
+      paymentRequirements: toJsonSafe(paymentRequirements),
+    };
 
-    if (res.status !== 200) {
-      const text = res.statusText;
-      throw new Error(`Failed to settle payment: ${res.status} ${text}`);
+    const requestTime = new Date().toISOString();
+
+    try {
+      const res = await fetch(`${url}/settle`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
+
+      if (res.status !== 200) {
+        const text = res.statusText;
+        let responseBody: any;
+        try {
+          responseBody = await res.json();
+        } catch {
+          responseBody = await res.text().catch(() => 'Unable to read response body');
+        }
+
+        // Log verbose debug information
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('🔴 FACILITATOR SETTLE CALL FAILED');
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('⏰ Timestamp:', requestTime);
+        console.error('📍 URL:', `${url}/settle`);
+        console.error('📤 Request Method:', 'POST');
+        console.error('📋 Request Headers:', JSON.stringify(headers, null, 2));
+        console.error('📦 Request Body:', JSON.stringify(requestBody, null, 2));
+        console.error('');
+        console.error('📥 Response Status:', res.status, text);
+        console.error('📋 Response Headers:', JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2));
+        console.error('📦 Response Body:', typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody, null, 2));
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        throw new Error(`Failed to settle payment: ${res.status} ${text}`);
+      }
+
+      const data = await res.json();
+      return data as SettleResponse;
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'fetch failed') {
+        throw new Error(`Unable to connect to facilitator at ${url}. Please check your network connection or facilitator URL.`);
+      }
+      throw error;
     }
-
-    const data = await res.json();
-    return data as SettleResponse;
   }
 
   /**
@@ -117,17 +157,24 @@ export function useFacilitator(facilitator?: FacilitatorConfig) {
       headers = { ...headers, ...authHeaders.supported };
     }
 
-    const res = await fetch(`${url}/supported`, {
-      method: "GET",
-      headers,
-    });
+    try {
+      const res = await fetch(`${url}/supported`, {
+        method: "GET",
+        headers,
+      });
 
-    if (res.status !== 200) {
-      throw new Error(`Failed to get supported payment kinds: ${res.statusText}`);
+      if (res.status !== 200) {
+        throw new Error(`Failed to get supported payment kinds: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      return data as SupportedPaymentKindsResponse;
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'fetch failed') {
+        throw new Error(`Unable to connect to facilitator at ${url}. Please check your network connection or facilitator URL.`);
+      }
+      throw error;
     }
-
-    const data = await res.json();
-    return data as SupportedPaymentKindsResponse;
   }
 
   /**
@@ -155,18 +202,25 @@ export function useFacilitator(facilitator?: FacilitatorConfig) {
         .map(([key, value]) => [key, value.toString()]),
     );
 
-    const res = await fetch(`${url}/discovery/resources?${urlParams.toString()}`, {
-      method: "GET",
-      headers,
-    });
+    try {
+      const res = await fetch(`${url}/discovery/resources?${urlParams.toString()}`, {
+        method: "GET",
+        headers,
+      });
 
-    if (res.status !== 200) {
-      const text = res.statusText;
-      throw new Error(`Failed to list discovery: ${res.status} ${text}`);
+      if (res.status !== 200) {
+        const text = res.statusText;
+        throw new Error(`Failed to list discovery: ${res.status} ${text}`);
+      }
+
+      const data = await res.json();
+      return data as ListDiscoveryResourcesResponse;
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'fetch failed') {
+        throw new Error(`Unable to connect to facilitator at ${url}. Please check your network connection or facilitator URL.`);
+      }
+      throw error;
     }
-
-    const data = await res.json();
-    return data as ListDiscoveryResourcesResponse;
   }
 
   return { verify, settle, supported, list };

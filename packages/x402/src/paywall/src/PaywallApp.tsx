@@ -641,6 +641,64 @@ export function PaywallApp() {
                       }}
                       disabled={isWrapping}
                     />
+
+                    {/* Percentage shortcuts */}
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      marginTop: '0.5rem',
+                      justifyContent: 'space-between'
+                    }}>
+                      {[25, 50, 75, 100].map((percentage) => (
+                        <button
+                          key={percentage}
+                          onClick={() => {
+                            const balance = isWrapMode ? nativeBalance : formattedUsdcBalance;
+                            if (balance) {
+                              if (percentage === 100) {
+                                // Use exact balance for 100%
+                                setWrapAmount(balance);
+                              } else {
+                                // For 25%, 50%, 75%: round to token decimals
+                                const amount = parseFloat(balance) * percentage / 100;
+                                const roundedAmount = amount.toFixed(tokenDecimals);
+                                setWrapAmount(roundedAmount);
+                              }
+                            }
+                          }}
+                          disabled={isWrapping}
+                          style={{
+                            flex: 1,
+                            padding: '0.5rem',
+                            backgroundColor: '#1A2130',
+                            color: '#9AA4B2',
+                            border: '1px solid #1A2130',
+                            borderRadius: '0.375rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: isWrapping ? 'not-allowed' : 'pointer',
+                            transition: 'all 150ms',
+                            opacity: isWrapping ? 0.5 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isWrapping) {
+                              e.currentTarget.style.backgroundColor = '#2A3340';
+                              e.currentTarget.style.borderColor = '#2DD4FF';
+                              e.currentTarget.style.color = '#2DD4FF';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isWrapping) {
+                              e.currentTarget.style.backgroundColor = '#1A2130';
+                              e.currentTarget.style.borderColor = '#1A2130';
+                              e.currentTarget.style.color = '#9AA4B2';
+                            }
+                          }}
+                        >
+                          {percentage}%
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Action button */}

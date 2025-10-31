@@ -335,7 +335,21 @@ export function paymentMiddleware(
       );
     }
 
-    const verification = await verify(decodedPayment, selectedPaymentRequirements);
+    let verification;
+    try {
+      verification = await verify(decodedPayment, selectedPaymentRequirements);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Verification service unavailable";
+      console.error("Payment verification failed:", errorMessage);
+      return new NextResponse(
+        JSON.stringify({
+          x402Version,
+          error: errorMessage,
+          accepts: paymentRequirements,
+        }),
+        { status: 502, headers: { "Content-Type": "application/json" } },
+      );
+    }
 
     if (!verification.isValid) {
       return new NextResponse(
@@ -376,13 +390,19 @@ export function paymentMiddleware(
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Settlement failed";
+      console.error("Payment settlement failed:", errorMessage);
+
+      // Use 502 for connection/network issues, 402 for other settlement failures
+      const isConnectionError = errorMessage.includes("Unable to connect");
+      const status = isConnectionError ? 502 : 402;
+
       return new NextResponse(
         JSON.stringify({
           x402Version,
           error: `Settlement failed: ${errorMessage}`,
           accepts: paymentRequirements,
         }),
-        { status: 402, headers: { "Content-Type": "application/json" } },
+        { status, headers: { "Content-Type": "application/json" } },
       );
     }
 
