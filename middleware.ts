@@ -136,11 +136,9 @@ const routes: Record<string, NetworkRouteConfig> = {
   "/protected": routeConfig,
 };
 
-// Use first wallet address or empty string
-const payTo = (walletAddresses[0] || "") as Address;
-
+// Pass wallet addresses array for per-network mapping
 export const middleware = paymentMiddleware(
-  payTo,
+  walletAddresses.length > 0 ? walletAddresses : [""],
   routes,
   {
     url: facilitatorUrl,

@@ -240,7 +240,7 @@ export function PaywallApp() {
       checkUSDCBalance();
       checkNativeBalance();
     }
-  }, [address]);
+  }, [address, checkUSDCBalance, checkNativeBalance]);
 
   useEffect(() => {
     if (isConnected && paymentChain.id === connectedChainId) {

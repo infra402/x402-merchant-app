@@ -31,7 +31,7 @@ import { POST } from "./api/session-token";
 /**
  * Creates a payment middleware factory for Next.js
  *
- * @param payTo - The address to receive payments
+ * @param payTo - The address(es) to receive payments. Can be a single address or an array of addresses (one per network)
  * @param routes - Configuration for protected routes and their payment requirements
  * @param facilitator - Optional configuration for the payment facilitator service
  * @param paywall - Optional configuration for the default paywall
@@ -47,6 +47,19 @@ import { POST } from "./api/session-token";
  *     network: 'base-sepolia'
  *   },
  *   // Optional facilitator configuration. Defaults to x402.org/facilitator for testnet usage
+ * );
+ *
+ * // Multi-network configuration - Array of addresses mapped to networks by index
+ * export const middleware = paymentMiddleware(
+ *   ['0x123...', '0x456...'], // payTo addresses - one for each network
+ *   {
+ *     '/protected/*': {
+ *       networks: [
+ *         { price: '$0.001', network: 'base' },      // Uses 0x123...
+ *         { price: '$0.001', network: 'optimism' }   // Uses 0x456...
+ *       ]
+ *     }
+ *   }
  * );
  *
  * // Advanced configuration - Endpoint-specific payment requirements & custom facilitator
@@ -91,7 +104,7 @@ import { POST } from "./api/session-token";
  * ```
  */
 export function paymentMiddleware(
-  payTo: Address | SolanaAddress,
+  payTo: Address | SolanaAddress | (Address | SolanaAddress)[],
   routes: RoutesConfig,
   facilitator?: FacilitatorConfig,
   paywall?: PaywallConfig,
@@ -136,9 +149,15 @@ export function paymentMiddleware(
     // Get network configurations - either from networks array or single network config
     const networkConfigs = networks || [{ price, network }];
 
+    // Normalize payTo to array for consistent handling
+    const payToArray = Array.isArray(payTo) ? payTo : [payTo];
+
     // TODO: create a shared middleware function to build payment requirements
     // Loop through all network configurations and create payment requirements for each
-    for (const netConfig of networkConfigs) {
+    for (let i = 0; i < networkConfigs.length; i++) {
+      const netConfig = networkConfigs[i];
+      // Map wallet address by network index, fallback to first address
+      const currentPayTo = payToArray[i] || payToArray[0];
       const atomicAmountForAsset = processPriceToAtomicAmount(netConfig.price, netConfig.network);
       if ("error" in atomicAmountForAsset) {
         return new NextResponse(atomicAmountForAsset.error, { status: 500 });
@@ -154,7 +173,7 @@ export function paymentMiddleware(
           resource: resourceUrl,
           description: description ?? "",
           mimeType: mimeType ?? "application/json",
-          payTo: getAddress(payTo),
+          payTo: getAddress(currentPayTo as Address),
           maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
           asset: getAddress(asset.address),
           // TODO: Rename outputSchema to requestStructure
@@ -200,7 +219,7 @@ export function paymentMiddleware(
           resource: resourceUrl,
           description: description ?? "",
           mimeType: mimeType ?? "",
-          payTo: payTo,
+          payTo: currentPayTo as SolanaAddress,
           maxTimeoutSeconds: maxTimeoutSeconds ?? 60,
           asset: asset.address,
           // TODO: Rename outputSchema to requestStructure
@@ -227,7 +246,7 @@ export function paymentMiddleware(
           resource: resourceUrl,
           description: description ?? "",
           mimeType: mimeType ?? "application/json",
-          payTo: getAddress(payTo),
+          payTo: getAddress(currentPayTo as Address),
           maxTimeoutSeconds: maxTimeoutSeconds ?? 300,
           asset: getAddress(asset.address),
           outputSchema: {
