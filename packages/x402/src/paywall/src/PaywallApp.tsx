@@ -63,6 +63,9 @@ export function PaywallApp() {
   const [isWrapping, setIsWrapping] = useState(false);
   const [wrapStatus, setWrapStatus] = useState<string>("");
 
+  // Nonce mode state
+  const [nonceMode, setNonceMode] = useState<'random' | 'lastByte0' | 'lastByte1'>('random');
+
   const x402 = window.x402;
   const testnet = x402.testnet ?? true;
 
@@ -259,6 +262,16 @@ export function PaywallApp() {
     setPaymentSuccess(true);
   }, []);
 
+  // Helper function to apply nonce masking based on mode
+  const applyNonceMask = (nonce: string, mode: 'random' | 'lastByte0' | 'lastByte1'): string => {
+    if (mode === 'random') return nonce;
+    // nonce is "0x" + 64 hex chars (32 bytes)
+    // Last byte = last 2 hex characters
+    const prefix = nonce.slice(0, -2);
+    const lastByte = mode === 'lastByte0' ? '00' : '01';
+    return prefix + lastByte;
+  };
+
   const handleSwitchChain = useCallback(async () => {
     if (isCorrectChain) {
       return;
@@ -321,10 +334,24 @@ export function PaywallApp() {
       // Use x402Version from server's initial 402 response instead of hardcoded 1
       const serverVersion = x402.x402Version || 1;
 
-      const initialPayment = await exact.evm.createPayment(
-        walletClient,
+      // Prepare unsigned payment header first
+      const unsignedPayment = exact.evm.preparePaymentHeader(
+        address,
         serverVersion,
         validPaymentRequirements,
+      );
+
+      // Apply nonce masking based on selected mode
+      unsignedPayment.payload.authorization.nonce = applyNonceMask(
+        unsignedPayment.payload.authorization.nonce,
+        nonceMode
+      ) as `0x${string}`;
+
+      // Sign the payment header with the masked nonce
+      const initialPayment = await exact.evm.signPaymentHeader(
+        walletClient,
+        validPaymentRequirements,
+        unsignedPayment,
       );
 
       const paymentHeader: string = exact.evm.encodePayment(initialPayment);
@@ -389,7 +416,7 @@ export function PaywallApp() {
     } finally {
       setIsPaying(false);
     }
-  }, [address, x402, paymentRequirements, amount, network, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient, tokenAddress]);
+  }, [address, x402, paymentRequirements, amount, network, tokenSymbol, networkDisplayName, publicClient, paymentChain, handleSwitchChain, handleSuccessfulResponse, wagmiWalletClient, tokenAddress, nonceMode]);
 
   const handleWrap = useCallback(async () => {
     if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
@@ -783,6 +810,56 @@ export function PaywallApp() {
               <div className="payment-row">
                 <span className="payment-label">Network:</span>
                 <span className="payment-value">{networkDisplayName}</span>
+              </div>
+              <div className="payment-row">
+                <span className="payment-label">Nonce:</span>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <select
+                    value={nonceMode}
+                    onChange={(e) => setNonceMode(e.target.value as 'random' | 'lastByte0' | 'lastByte1')}
+                    style={{
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                      backgroundColor: '#1A2130',
+                      color: '#E8ECF1',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      padding: '0.5rem 2.5rem 0.5rem 1rem',
+                      fontFamily: 'Geist Sans, sans-serif',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      minWidth: '140px'
+                    }}
+                  >
+                    <option value="random">Random</option>
+                    <option value="lastByte0">Last Byte 0</option>
+                    <option value="lastByte1">Last Byte 1</option>
+                  </select>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{
+                      position: 'absolute',
+                      right: '1rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <path
+                      d="M2.5 4.5L6 8L9.5 4.5"
+                      stroke="#E8ECF1"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
 
