@@ -16,6 +16,7 @@ interface PaywallOptions {
   paywallMessage?: string;
   networksEnv?: string;
   amountsEnv?: string;
+  facilitatorUrl?: string;
 }
 
 /**
@@ -62,6 +63,7 @@ export function getPaywallHtml({
   paywallMessage,
   networksEnv,
   amountsEnv,
+  facilitatorUrl,
 }: PaywallOptions): string {
   const logOnTestnet = testnet
     ? "console.log('Payment requirements initialized:', window.x402);"
@@ -87,6 +89,7 @@ export function getPaywallHtml({
       paywallMessage: "${escapeString(paywallMessage || "")}",
       networksEnv: "${escapeString(networksEnv || "")}",
       amountsEnv: "${escapeString(amountsEnv || "")}",
+      facilitatorUrl: "${escapeString(facilitatorUrl || "")}",
     };
     ${logOnTestnet}
   </script>`;

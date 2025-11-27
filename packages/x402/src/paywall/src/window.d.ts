@@ -15,6 +15,7 @@ declare global {
       paywallMessage?: string;
       networksEnv?: string;
       amountsEnv?: string;
+      facilitatorUrl?: string;
       config: {
         chainConfig: Record<
           string,

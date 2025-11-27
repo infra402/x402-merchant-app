@@ -925,6 +925,18 @@ export function PaywallApp() {
                       <div>{paymentError}</div>
                     </div>
                   )}
+                  {x402.facilitatorUrl && (
+                    <div style={{
+                      marginTop: '1.5rem',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.75rem',
+                      color: '#9AA4B2',
+                      fontFamily: 'Geist Mono, monospace',
+                      textAlign: 'center'
+                    }}>
+                      Facilitator: {x402.facilitatorUrl}
+                    </div>
+                  )}
                 </>
               );
             })()}
