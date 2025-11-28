@@ -22,8 +22,3 @@
 
 * Do not touch (read/write) the .env file without explicilty asking for permissions.
 
-## Project Specific
-
-Re-generate paywall template with "npm run build:paywall" on any relevant change under packages/x402/src/paywall/.
-
-

@@ -10,9 +10,18 @@ import { exact } from "../../schemes";
 import { CustomConnectButton } from "./CustomConnectButton";
 import { getUSDCBalance } from "../../shared/evm";
 import { usdcABI } from "../../types/shared/evm/erc20PermitABI";
+import { config as defaultChainConfig } from "../../types/shared/evm/config";
+import type { PaywallRedirectData } from "../redirect";
 
 import { Spinner } from "./Spinner";
 import { ensureValidAmount } from "./utils";
+
+export interface PaywallAppProps {
+  /** Data passed from redirect (when using redirect mode) */
+  data?: PaywallRedirectData;
+  /** Chain config for USDC addresses (optional, defaults to built-in config) */
+  chainConfig?: Record<string, { usdcAddress: string; usdcName: string }>;
+}
 
 // XBNB/Wrapped Native Token ABI - only the functions we need
 const xbnbABI = [
@@ -41,9 +50,12 @@ const xbnbABI = [
 /**
  * Main Paywall App Component
  *
+ * @param props - Component props
+ * @param props.data - Data passed from redirect (when using redirect mode)
+ * @param props.chainConfig - Chain config for USDC addresses (optional)
  * @returns The PaywallApp component
  */
-export function PaywallApp() {
+export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
   const { address, isConnected, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: wagmiWalletClient } = useWalletClient();
@@ -66,12 +78,25 @@ export function PaywallApp() {
   // Nonce mode state
   const [nonceMode, setNonceMode] = useState<'random' | 'lastByte0' | 'lastByte1'>('random');
 
-  const x402 = window.x402;
-  const testnet = x402.testnet ?? true;
+  // Support both props (redirect mode) and window.x402 (legacy/template mode)
+  const x402 = useMemo(() => {
+    if (data) {
+      return {
+        ...data,
+        config: {
+          chainConfig: chainConfig || defaultChainConfig,
+        },
+      };
+    }
+    // Fallback to window.x402 for backward compatibility
+    return typeof window !== 'undefined' ? window.x402 : null;
+  }, [data, chainConfig]);
+
+  const testnet = x402?.testnet ?? true;
 
   // Parse configured networks and amounts from env
-  const networksEnv = x402.networksEnv || 'base-sepolia';
-  const amountsEnv = x402.amountsEnv || '0.01';
+  const networksEnv = x402?.networksEnv || 'base-sepolia';
+  const amountsEnv = x402?.amountsEnv || '0.01';
   const networks = networksEnv.split(',').map(n => n.trim());
   const amounts = amountsEnv.split(',').map(a => a.trim());
 

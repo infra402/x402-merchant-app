@@ -17,6 +17,8 @@ export type PaywallConfig = {
   sessionTokenEndpoint?: string;
   networksEnv?: string;
   amountsEnv?: string;
+  /** Custom path for paywall page (default: '/paywall') */
+  paywallPath?: string;
 };
 
 export type PaymentMiddlewareConfig = {

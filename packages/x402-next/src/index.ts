@@ -10,7 +10,7 @@ import {
   processPriceToAtomicAmount,
   toJsonSafe,
 } from "x402/shared";
-import { getPaywallHtml } from "x402/paywall";
+import { encodePaywallData, PaywallRedirectData } from "x402/paywall";
 import {
   FacilitatorConfig,
   moneySchema,
@@ -271,6 +271,15 @@ export function paymentMiddleware(
       if (accept?.includes("text/html")) {
         const userAgent = request.headers.get("User-Agent");
         if (userAgent?.includes("Mozilla")) {
+          // Custom HTML paywall takes precedence
+          if (customPaywallHtml) {
+            return new NextResponse(customPaywallHtml, {
+              status: 402,
+              headers: { "Content-Type": "text/html" },
+            });
+          }
+
+          // Calculate display amount for paywall
           let displayAmount: number;
           if (typeof price === "string" || typeof price === "number") {
             const parsed = moneySchema.safeParse(price);
@@ -283,31 +292,31 @@ export function paymentMiddleware(
             displayAmount = Number(price.amount) / 10 ** price.asset.decimals;
           }
 
-          // TODO: handle paywall html for solana
-          const html =
-            customPaywallHtml ??
-            getPaywallHtml({
-              amount: displayAmount,
-              paymentRequirements: toJsonSafe(paymentRequirements) as Parameters<
-                typeof getPaywallHtml
-              >[0]["paymentRequirements"],
-              currentUrl: request.url,
-              testnet: network === "base-sepolia",
-              x402Version,
-              cdpClientKey: paywall?.cdpClientKey,
-              appLogo: paywall?.appLogo,
-              appName: paywall?.appName,
-              sessionTokenEndpoint: paywall?.sessionTokenEndpoint,
-              paywallTitle: title,
-              paywallMessage: message,
-              networksEnv: paywall?.networksEnv,
-              amountsEnv: paywall?.amountsEnv,
-              facilitatorUrl: facilitator?.url,
-            });
-          return new NextResponse(html, {
-            status: 402,
-            headers: { "Content-Type": "text/html" },
-          });
+          // Redirect to paywall page with encoded data
+          const paywallData: PaywallRedirectData = {
+            amount: displayAmount,
+            paymentRequirements: toJsonSafe(paymentRequirements) as PaywallRedirectData["paymentRequirements"],
+            currentUrl: request.url,
+            testnet: network === "base-sepolia",
+            x402Version,
+            cdpClientKey: paywall?.cdpClientKey,
+            appName: paywall?.appName,
+            appLogo: paywall?.appLogo,
+            sessionTokenEndpoint: paywall?.sessionTokenEndpoint,
+            paywallTitle: title,
+            paywallMessage: message,
+            networksEnv: paywall?.networksEnv,
+            amountsEnv: paywall?.amountsEnv,
+            facilitatorUrl: facilitator?.url,
+            timestamp: Date.now(),
+          };
+
+          const paywallPath = paywall?.paywallPath || "/paywall";
+          const encoded = encodePaywallData(paywallData);
+          const redirectUrl = new URL(paywallPath, request.nextUrl.origin);
+          redirectUrl.searchParams.set("data", encoded);
+
+          return NextResponse.redirect(redirectUrl, { status: 302 });
         }
       }
 
