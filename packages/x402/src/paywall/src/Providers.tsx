@@ -17,11 +17,22 @@ import {
   braveWallet,
   imTokenWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { http, type Chain } from "viem";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
 import { WagmiProvider, createConfig, createStorage } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Suppress Coinbase Analytics SDK errors (blocked by ad blockers)
+const suppressAnalyticsErrors = () => {
+  if (typeof window === 'undefined') return;
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    const message = args[0];
+    if (typeof message === 'string' && message.includes('Analytics SDK')) return;
+    originalError.apply(console, args);
+  };
+};
 
 export type ProvidersProps = {
   children: ReactNode;
@@ -78,6 +89,11 @@ const getAppName = (appName?: string): string => {
  * @returns The Providers component
  */
 export function Providers({ children, networksEnv, appName }: ProvidersProps) {
+  // Suppress analytics errors on mount (ad blockers cause these)
+  useEffect(() => {
+    suppressAnalyticsErrors();
+  }, []);
+
   // Memoize config to avoid recreating on each render
   const { wagmiConfig, configuredChains } = useMemo(() => {
     const resolvedAppName = getAppName(appName);
