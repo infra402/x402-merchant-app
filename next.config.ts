@@ -18,6 +18,18 @@ const nextConfig: NextConfig = {
     PAYMENT_TOKEN_VERSION: process.env.PAYMENT_TOKEN_VERSION,
     PAYMENT_TOKEN_DECIMALS: process.env.PAYMENT_TOKEN_DECIMALS,
   },
+
+  // Turbopack configuration for SVG as React components (Next.js 16 default bundler)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+
+  // Webpack fallback for production builds (if not using --turbopack flag)
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

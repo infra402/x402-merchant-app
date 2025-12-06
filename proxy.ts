@@ -137,7 +137,7 @@ const routes: Record<string, NetworkRouteConfig> = {
 };
 
 // Pass wallet addresses array for per-network mapping
-export const middleware = paymentMiddleware(
+export const proxy = paymentMiddleware(
   walletAddresses.length > 0 ? walletAddresses : [""],
   routes,
   {
