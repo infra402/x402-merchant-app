@@ -19,6 +19,14 @@ export type PaywallConfig = {
   amountsEnv?: string;
   /** Custom path for paywall page (default: '/paywall') */
   paywallPath?: string;
+  /** Wrap mode configuration (comma-separated: "native" or "erc20" per network) */
+  wrapModesEnv?: string;
+  /** Underlying ERC20 token addresses for wrap (comma-separated, required when wrapMode is "erc20") */
+  wrapUnderlyingAddressesEnv?: string;
+  /** Underlying ERC20 token symbols for wrap (comma-separated) */
+  wrapUnderlyingSymbolsEnv?: string;
+  /** Underlying ERC20 token decimals for wrap (comma-separated) */
+  wrapUnderlyingDecimalsEnv?: string;
 };
 
 export type PaymentMiddlewareConfig = {

@@ -148,6 +148,10 @@ export const proxy = paymentMiddleware(
     appLogo: "/web-app-manifest-512x512.png",
     networksEnv: process.env.NETWORKS || "base-sepolia",
     amountsEnv: process.env.PAYWALL_AMOUNTS || "0.01",
+    wrapModesEnv: process.env.WRAP_MODES || "",
+    wrapUnderlyingAddressesEnv: process.env.WRAP_UNDERLYING_TOKEN_ADDRESSES || "",
+    wrapUnderlyingSymbolsEnv: process.env.WRAP_UNDERLYING_TOKEN_SYMBOLS || "",
+    wrapUnderlyingDecimalsEnv: process.env.WRAP_UNDERLYING_TOKEN_DECIMALS || "",
   },
 );
 

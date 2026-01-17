@@ -15,6 +15,14 @@ export interface PaywallRedirectData {
   amountsEnv?: string;
   sessionTokenEndpoint?: string;
   facilitatorUrl?: string;
+  /** Wrap mode configuration (comma-separated: "native" or "erc20" per network) */
+  wrapModesEnv?: string;
+  /** Underlying ERC20 token addresses for wrap (comma-separated) */
+  wrapUnderlyingAddressesEnv?: string;
+  /** Underlying ERC20 token symbols for wrap (comma-separated) */
+  wrapUnderlyingSymbolsEnv?: string;
+  /** Underlying ERC20 token decimals for wrap (comma-separated) */
+  wrapUnderlyingDecimalsEnv?: string;
   timestamp: number;
 }
 

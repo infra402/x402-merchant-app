@@ -308,6 +308,10 @@ export function paymentMiddleware(
             networksEnv: paywall?.networksEnv,
             amountsEnv: paywall?.amountsEnv,
             facilitatorUrl: facilitator?.url,
+            wrapModesEnv: paywall?.wrapModesEnv,
+            wrapUnderlyingAddressesEnv: paywall?.wrapUnderlyingAddressesEnv,
+            wrapUnderlyingSymbolsEnv: paywall?.wrapUnderlyingSymbolsEnv,
+            wrapUnderlyingDecimalsEnv: paywall?.wrapUnderlyingDecimalsEnv,
             timestamp: Date.now(),
           };
 

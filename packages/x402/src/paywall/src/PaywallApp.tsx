@@ -11,6 +11,8 @@ import { CustomConnectButton } from "./CustomConnectButton";
 import { getUSDCBalance } from "../../shared/evm";
 import { usdcABI } from "../../types/shared/evm/erc20PermitABI";
 import { config as defaultChainConfig } from "../../types/shared/evm/config";
+import { nativeWrapperABI } from "../../types/shared/evm/nativeWrapperABI";
+import { erc20WrapperABI, underlyingTokenABI } from "../../types/shared/evm/erc20WrapperABI";
 import type { PaywallRedirectData } from "../redirect";
 
 import { Spinner } from "./Spinner";
@@ -23,29 +25,18 @@ export interface PaywallAppProps {
   chainConfig?: Record<string, { usdcAddress: string; usdcName: string }>;
 }
 
-// XBNB/Wrapped Native Token ABI - only the functions we need
-const xbnbABI = [
-  {
-    name: "deposit",
-    type: "function",
-    inputs: [],
-    outputs: [],
-    stateMutability: "payable",
-  },
-  {
-    name: "withdraw",
-    type: "function",
-    inputs: [
-      {
-        name: "amount",
-        type: "uint256",
-        internalType: "uint256",
-      },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-] as const;
+// Wrap mode type
+type WrapMode = 'native' | 'erc20';
+
+// Wrap configuration type
+interface WrapConfig {
+  mode: WrapMode;
+  underlyingToken: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+  } | null;
+}
 
 /**
  * Main Paywall App Component
@@ -72,6 +63,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
   const [isWrapMode, setIsWrapMode] = useState(true);
   const [wrapAmount, setWrapAmount] = useState("");
   const [nativeBalance, setNativeBalance] = useState<string>("");
+  const [underlyingBalance, setUnderlyingBalance] = useState<string>("");
   const [isWrapping, setIsWrapping] = useState(false);
   const [wrapStatus, setWrapStatus] = useState<string>("");
 
@@ -99,6 +91,16 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
   const amountsEnv = x402?.amountsEnv || '0.01';
   const networks = networksEnv.split(',').map(n => n.trim());
   const amounts = amountsEnv.split(',').map(a => a.trim());
+
+  // Parse wrap configuration from env
+  const wrapModesEnv = x402?.wrapModesEnv || '';
+  const wrapUnderlyingAddressesEnv = x402?.wrapUnderlyingAddressesEnv || '';
+  const wrapUnderlyingSymbolsEnv = x402?.wrapUnderlyingSymbolsEnv || '';
+  const wrapUnderlyingDecimalsEnv = x402?.wrapUnderlyingDecimalsEnv || '';
+  const wrapModes = wrapModesEnv.split(',').map(m => m.trim());
+  const wrapUnderlyingAddresses = wrapUnderlyingAddressesEnv.split(',').map(a => a.trim());
+  const wrapUnderlyingSymbols = wrapUnderlyingSymbolsEnv.split(',').map(s => s.trim());
+  const wrapUnderlyingDecimals = wrapUnderlyingDecimalsEnv.split(',').map(d => d.trim());
 
   // Map chainId to network key
   const getNetworkFromChainId = (chainId: number | undefined): string => {
@@ -214,6 +216,28 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
 
   const tokenAddress = getTokenAddress();
 
+  // Get wrap configuration for current network
+  const wrapConfig = useMemo((): WrapConfig => {
+    const networkIndex = networks.indexOf(network);
+    const mode = (wrapModes[networkIndex] || 'native') as WrapMode;
+
+    if (mode === 'erc20') {
+      const underlyingAddress = wrapUnderlyingAddresses[networkIndex];
+      if (underlyingAddress) {
+        return {
+          mode: 'erc20',
+          underlyingToken: {
+            address: underlyingAddress as Address,
+            symbol: wrapUnderlyingSymbols[networkIndex] || 'TOKEN',
+            decimals: parseInt(wrapUnderlyingDecimals[networkIndex] || '18', 10),
+          },
+        };
+      }
+    }
+
+    return { mode: 'native', underlyingToken: null };
+  }, [network, networks, wrapModes, wrapUnderlyingAddresses, wrapUnderlyingSymbols, wrapUnderlyingDecimals]);
+
   const publicClient = createPublicClient({
     chain: paymentChain,
     transport: http(),
@@ -263,12 +287,35 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
     }
   }, [address, publicClient]);
 
+  const checkUnderlyingBalance = useCallback(async () => {
+    if (!address || wrapConfig.mode !== 'erc20' || !wrapConfig.underlyingToken) {
+      setUnderlyingBalance("");
+      return;
+    }
+
+    try {
+      const balance = await publicClient.readContract({
+        address: wrapConfig.underlyingToken.address,
+        abi: underlyingTokenABI,
+        functionName: "balanceOf",
+        args: [address],
+      });
+
+      const formattedBalance = formatUnits(balance as bigint, wrapConfig.underlyingToken.decimals);
+      setUnderlyingBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching underlying token balance:", error);
+      setUnderlyingBalance("0");
+    }
+  }, [address, publicClient, wrapConfig]);
+
   useEffect(() => {
     if (address) {
       checkUSDCBalance();
       checkNativeBalance();
+      checkUnderlyingBalance();
     }
-  }, [address, checkUSDCBalance, checkNativeBalance]);
+  }, [address, checkUSDCBalance, checkNativeBalance, checkUnderlyingBalance]);
 
   useEffect(() => {
     if (isConnected && paymentChain.id === connectedChainId) {
@@ -455,25 +502,67 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
     setWrapStatus("");
 
     try {
-      const amountInWei = (BigInt(Math.round(parseFloat(wrapAmount) * 1e18))).toString();
+      if (wrapConfig.mode === 'native') {
+        // Native mode: wrap native token (e.g., BNB) using deposit() with value
+        const amountInWei = BigInt(Math.round(parseFloat(wrapAmount) * 1e18));
 
-      setWrapStatus("Wrapping native tokens...");
-      const hash = await walletClient.writeContract({
-        address: tokenAddress,
-        abi: xbnbABI,
-        functionName: "deposit",
-        args: [],
-        value: BigInt(amountInWei),
-      });
+        setWrapStatus("Wrapping native tokens...");
+        const hash = await walletClient.writeContract({
+          address: tokenAddress,
+          abi: nativeWrapperABI,
+          functionName: "deposit",
+          args: [],
+          value: amountInWei,
+        });
 
-      setWrapStatus("Waiting for confirmation...");
-      await publicClient.waitForTransactionReceipt({ hash });
+        setWrapStatus("Waiting for confirmation...");
+        await publicClient.waitForTransactionReceipt({ hash });
+      } else if (wrapConfig.mode === 'erc20' && wrapConfig.underlyingToken) {
+        // ERC20 mode: wrap underlying ERC20 token using deposit(amount) after approval
+        const underlyingToken = wrapConfig.underlyingToken;
+        const amountInUnits = BigInt(Math.round(parseFloat(wrapAmount) * 10 ** underlyingToken.decimals));
+
+        // Step 1: Check current allowance
+        setWrapStatus("Checking allowance...");
+        const currentAllowance = await publicClient.readContract({
+          address: underlyingToken.address,
+          abi: underlyingTokenABI,
+          functionName: "allowance",
+          args: [address, tokenAddress],
+        }) as bigint;
+
+        // Step 2: Approve if needed
+        if (currentAllowance < amountInUnits) {
+          setWrapStatus(`Approving ${underlyingToken.symbol}...`);
+          const approveHash = await walletClient.writeContract({
+            address: underlyingToken.address,
+            abi: underlyingTokenABI,
+            functionName: "approve",
+            args: [tokenAddress, amountInUnits],
+          });
+
+          setWrapStatus("Waiting for approval confirmation...");
+          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        }
+
+        // Step 3: Call deposit(amount) on the wrapper contract
+        setWrapStatus(`Wrapping ${underlyingToken.symbol}...`);
+        const hash = await walletClient.writeContract({
+          address: tokenAddress,
+          abi: erc20WrapperABI,
+          functionName: "deposit",
+          args: [amountInUnits],
+        });
+
+        setWrapStatus("Waiting for confirmation...");
+        await publicClient.waitForTransactionReceipt({ hash });
+      }
 
       setWrapStatus("✓ Wrap successful!");
       setWrapAmount("");
 
-      // Refresh balances
-      await Promise.all([checkNativeBalance(), checkUSDCBalance()]);
+      // Refresh all relevant balances
+      await Promise.all([checkNativeBalance(), checkUSDCBalance(), checkUnderlyingBalance()]);
 
       setTimeout(() => setWrapStatus(""), 3000);
     } catch (error) {
@@ -481,7 +570,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
     } finally {
       setIsWrapping(false);
     }
-  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance]);
+  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance, checkUnderlyingBalance, wrapConfig]);
 
   const handleUnwrap = useCallback(async () => {
     if (!address || !wagmiWalletClient || !tokenAddress || !wrapAmount) {
@@ -495,24 +584,42 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
     setWrapStatus("");
 
     try {
-      const amountInWei = (BigInt(Math.round(parseFloat(wrapAmount) * 1e18))).toString();
+      if (wrapConfig.mode === 'native') {
+        // Native mode: unwrap to native token using withdraw(amount)
+        const amountInWei = BigInt(Math.round(parseFloat(wrapAmount) * 1e18));
 
-      setWrapStatus("Unwrapping tokens...");
-      const hash = await walletClient.writeContract({
-        address: tokenAddress,
-        abi: xbnbABI,
-        functionName: "withdraw",
-        args: [BigInt(amountInWei)],
-      });
+        setWrapStatus("Unwrapping tokens...");
+        const hash = await walletClient.writeContract({
+          address: tokenAddress,
+          abi: nativeWrapperABI,
+          functionName: "withdraw",
+          args: [amountInWei],
+        });
 
-      setWrapStatus("Waiting for confirmation...");
-      await publicClient.waitForTransactionReceipt({ hash });
+        setWrapStatus("Waiting for confirmation...");
+        await publicClient.waitForTransactionReceipt({ hash });
+      } else if (wrapConfig.mode === 'erc20' && wrapConfig.underlyingToken) {
+        // ERC20 mode: unwrap to underlying ERC20 token using withdraw(amount)
+        const underlyingToken = wrapConfig.underlyingToken;
+        const amountInUnits = BigInt(Math.round(parseFloat(wrapAmount) * 10 ** underlyingToken.decimals));
+
+        setWrapStatus(`Unwrapping to ${underlyingToken.symbol}...`);
+        const hash = await walletClient.writeContract({
+          address: tokenAddress,
+          abi: erc20WrapperABI,
+          functionName: "withdraw",
+          args: [amountInUnits],
+        });
+
+        setWrapStatus("Waiting for confirmation...");
+        await publicClient.waitForTransactionReceipt({ hash });
+      }
 
       setWrapStatus("✓ Unwrap successful!");
       setWrapAmount("");
 
-      // Refresh balances
-      await Promise.all([checkNativeBalance(), checkUSDCBalance()]);
+      // Refresh all relevant balances
+      await Promise.all([checkNativeBalance(), checkUSDCBalance(), checkUnderlyingBalance()]);
 
       setTimeout(() => setWrapStatus(""), 3000);
     } catch (error) {
@@ -520,13 +627,22 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
     } finally {
       setIsWrapping(false);
     }
-  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance]);
+  }, [address, wagmiWalletClient, tokenAddress, wrapAmount, handleSwitchChain, publicClient, checkNativeBalance, checkUSDCBalance, checkUnderlyingBalance, wrapConfig]);
 
   // Determine if wrap/unwrap should be shown (only for BSC networks)
   const showWrapUnwrap = network === "bsc" || network === "bsc-testnet";
 
-  // Get native token symbol
+  // Get native token symbol (for native wrap mode)
   const nativeTokenSymbol = network === "bsc" ? "BNB" : network === "bsc-testnet" ? "tBNB" : "";
+
+  // Get the source token symbol and balance based on wrap mode
+  const sourceTokenSymbol = wrapConfig.mode === 'erc20' && wrapConfig.underlyingToken
+    ? wrapConfig.underlyingToken.symbol
+    : nativeTokenSymbol;
+
+  const sourceBalance = wrapConfig.mode === 'erc20'
+    ? underlyingBalance
+    : nativeBalance;
 
   // Get explorer URL for token contract
   const getTokenExplorerUrl = (): string | null => {
@@ -545,7 +661,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
   const tokenExplorerUrl = getTokenExplorerUrl();
 
   // Validation for wrap/unwrap button
-  const canWrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(nativeBalance || "0");
+  const canWrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(sourceBalance || "0");
   const canUnwrap = wrapAmount && parseFloat(wrapAmount) > 0 && parseFloat(wrapAmount) <= parseFloat(formattedUsdcBalance || "0");
   const isWrapUnwrapValid = isWrapMode ? canWrap : canUnwrap;
 
@@ -634,7 +750,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
               <div id="wrap-unwrap-section" style={{ marginTop: '1rem' }}>
                 <div className="header">
                   <h1 className="title">Wrap / Unwrap</h1>
-                  <p className="subtitle">{nativeTokenSymbol}:{tokenSymbol} {'<->'} 1:1</p>
+                  <p className="subtitle">{sourceTokenSymbol}:{tokenSymbol} {'<->'} 1:1</p>
                 </div>
                 <div className="payment-details">
                   {/* Tabs */}
@@ -666,10 +782,10 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
                   {/* Balance info */}
                   <div className="payment-row">
                     <span className="payment-label">
-                      {isWrapMode ? `${nativeTokenSymbol} Balance:` : `${tokenSymbol} Balance:`}
+                      {isWrapMode ? `${sourceTokenSymbol} Balance:` : `${tokenSymbol} Balance:`}
                     </span>
                     <span className="payment-value">
-                      {isWrapMode ? `${nativeBalance || '0'} ${nativeTokenSymbol}` : `${formattedUsdcBalance || '0'} ${tokenSymbol}`}
+                      {isWrapMode ? `${sourceBalance || '0'} ${sourceTokenSymbol}` : `${formattedUsdcBalance || '0'} ${tokenSymbol}`}
                     </span>
                   </div>
 
@@ -678,7 +794,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
                     <input
                       type="number"
                       step="0.0001"
-                      placeholder={isWrapMode ? `Amount of ${nativeTokenSymbol} to wrap to ${tokenSymbol}` : `Amount of ${tokenSymbol} to unwrap to ${nativeTokenSymbol}`}
+                      placeholder={isWrapMode ? `Amount of ${sourceTokenSymbol} to wrap to ${tokenSymbol}` : `Amount of ${tokenSymbol} to unwrap to ${sourceTokenSymbol}`}
                       value={wrapAmount}
                       onChange={(e) => setWrapAmount(e.target.value)}
                       style={{
@@ -705,7 +821,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
                         <button
                           key={percentage}
                           onClick={() => {
-                            const balance = isWrapMode ? nativeBalance : formattedUsdcBalance;
+                            const balance = isWrapMode ? sourceBalance : formattedUsdcBalance;
                             if (balance) {
                               if (percentage === 100) {
                                 // Use exact balance for 100%
@@ -930,7 +1046,7 @@ export function PaywallApp({ data, chainConfig }: PaywallAppProps = {}) {
                       </div>
                       {showWrapUnwrap && (
                         <div style={{ marginTop: '0.5rem' }}>
-                          You can use the "Wrap" function above to wrap native BNB to {tokenSymbol}.
+                          You can use the "Wrap" function above to wrap {sourceTokenSymbol} to {tokenSymbol}.
                         </div>
                       )}
                     </div>
